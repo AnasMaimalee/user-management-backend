@@ -34,12 +34,9 @@ Route::middleware('auth:sanctum')->get('/dashboard', function (Request $request)
     ]);
 });
 
+
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('departments', [DepartmentController::class, 'index']);
-    Route::post('departments', [DepartmentController::class, 'store']);
-    Route::get('departments/{id}', [DepartmentController::class, 'show']);
-    Route::put('departments/{id}', [DepartmentController::class, 'update']);
-    Route::delete('departments/{id}', [DepartmentController::class, 'destroy']);
+    Route::apiResource('departments', DepartmentController::class);
 });
 
 
