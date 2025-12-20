@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\DepartmentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
@@ -22,27 +23,7 @@ Route::post('/register', function(Request $request){
     return response()->json($user);
 });
 
-//Route::post('/login', function(Request $request){
-//    $request->validate([
-//        'email' => 'required|email',
-//        'password' => 'required|min:8',
-//    ]);
-//
-//    $user = User::query()->where('email', $request->email)->first();
-//    if (!$user || ! \Illuminate\Support\Facades\Hash::check($request->password, $user->password)){
-//        throw ValidationException::withMessages([
-//            'email' => ['The provided credentials are incorrect.'],
-//        ]);
-//    }
-//
-//    $token = $user->createToken('api-token')->plainTextToken;
-//
-//    return response()->json([
-//        'user' => $user,
-//        'token' => $token,
-//    ]);
-//
-//});
+
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -51,6 +32,14 @@ Route::middleware('auth:sanctum')->get('/dashboard', function (Request $request)
         'message' => 'Welcome to your Dashboard!',
         'user' => $request->user()
     ]);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('departments', [DepartmentController::class, 'index']);
+    Route::post('departments', [DepartmentController::class, 'store']);
+    Route::get('departments/{id}', [DepartmentController::class, 'show']);
+    Route::put('departments/{id}', [DepartmentController::class, 'update']);
+    Route::delete('departments/{id}', [DepartmentController::class, 'destroy']);
 });
 
 
