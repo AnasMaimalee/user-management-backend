@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Employee;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,5 +22,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Model::unguard();
+
     }
+
+    protected $policies = [
+        Employee::class => EmployeePolicy::class,
+    ];
 }
