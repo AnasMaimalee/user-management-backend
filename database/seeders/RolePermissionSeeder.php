@@ -30,6 +30,7 @@ class RolePermissionSeeder extends Seeder
         $superAdmin->givePermissionTo(Permission::all());
 
         $hr->givePermissionTo([
+            'view departments', 'create departments', 'update departments', 'update department status',
             'view employees', 'create employees', 'update employees', 'update employee status',
         ]);
 
