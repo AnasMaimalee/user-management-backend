@@ -26,7 +26,14 @@ return new class extends Migration
             $table->enum('status', ['active', 'inactive', 'suspended'])->default('active');
 
             $table->timestamps();
+
+            // Foreign keys
+            $table->foreign('department_id')->references('id')->on('departments')->nullOnDelete();
+            $table->foreign('rank_id')->references('id')->on('ranks')->nullOnDelete();
+            $table->foreign('branch_id')->references('id')->on('branches')->nullOnDelete();
+
         });
+
     }
 
     /**

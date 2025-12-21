@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DepartmentController;
+use App\Http\Controllers\Api\EmployeeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
@@ -38,6 +39,9 @@ Route::middleware('auth:sanctum')->get('/dashboard', function (Request $request)
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('departments', DepartmentController::class);
     Route::patch('departments/{department}/status', [DepartmentController::class, 'updateStatus']);
+
+    Route::apiResource('employees', EmployeeController::class);
+    Route::patch('employees/{employee}/status', [EmployeeController::class, 'updateStatus']);
 });
 
 
