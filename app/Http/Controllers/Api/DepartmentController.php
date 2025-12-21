@@ -11,8 +11,13 @@ class DepartmentController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
-    {   $this->authorize('view', Department::class);
+    public function index(Request $request)
+    {    abort_unless(
+        $request->user()->can('view departments'),
+        403,
+        'You are not allowed to view departments'
+    );
+
         return response()->json(
             Department::latest()->get()
     );
@@ -23,7 +28,11 @@ class DepartmentController extends Controller
      */
     public function store(Request $request)
     {
-        $this->authorize('create departments', Department::class); // checks policy  // Will throw 403 if unauthorized
+        abort_unless(
+            $request->user()->can('create departments'),
+            403,
+            'You are not allowed to create departments'
+        );
         $validated = $request->validate([
             'name' => 'required|string|unique:departments,name',
             'description' => 'required|string',
@@ -36,9 +45,14 @@ class DepartmentController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Department $department)
+    public function show(Department $department, Request $request)
     {
-        $this->authorize('view departments', $department);
+        abort_unless(
+            $request->user()->can('view departments'),
+            403,
+            'You are not allowed to view departments'
+        );
+
         return response()->json($department);
     }
 
@@ -47,7 +61,10 @@ class DepartmentController extends Controller
      */
     public function update(Request $request, Department $department)
     {
-        $this->authorize('update departments', $department);
+        abort_unless(
+            $request->user()->can('update departments'),
+            403
+        );
         $validated = $request->validate([
             'name' => 'required|string|unique:departments,name',
             'description' => 'required|string',
@@ -57,9 +74,12 @@ class DepartmentController extends Controller
         return response()->json($department, 200);
     }
 
-    public function updateStatus(Department $department)
+    public function updateStatus(Department $department, Request $request)
     {
-        $this->authorize('update department status', $department);
+        abort_unless(
+            $request->user()->can('update departments'),
+            403
+        );
         // Toggle the status
         $newStatus = $department->status === 'active' ? 'inactive' : 'active';
 
@@ -77,8 +97,12 @@ class DepartmentController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Department $department)
+    public function destroy(Department $department, Request $request)
     {
+        abort_unless(
+            $request->user()->can('delete departments'),
+            403
+        );
         $department->delete();
         return response()->json(['message' => 'Department deleted'],);
     }
