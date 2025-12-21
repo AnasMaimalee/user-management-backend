@@ -3,6 +3,8 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\EmployeeController;
+use App\Http\Controllers\Api\RankController;
+use App\Http\Controllers\Api\BranchController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
@@ -40,6 +42,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('employees', EmployeeController::class);
     Route::patch('employees/{employee}/status', [EmployeeController::class, 'updateStatus']);
+
+    Route::apiResource('ranks', RankController::class);
+    Route::patch('ranks/{rank}/status', [RankController::class, 'updateStatus']);
+
+    Route::apiResource('branches', BranchController::class);
+    Route::patch('branches/{branch}/status', [BranchController::class, 'updateStatus']);
+
 });
 
 
