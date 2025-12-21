@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Department;
 use App\Models\Employee;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
@@ -16,6 +17,10 @@ class AppServiceProvider extends ServiceProvider
         //
     }
 
+    protected $policies = [
+        Department::class => DepartmentPolicy::class,
+        Employee::class => EmployeePolicy::class,
+    ];
     /**
      * Bootstrap any application services.
      */
@@ -25,7 +30,7 @@ class AppServiceProvider extends ServiceProvider
 
     }
 
-    protected $policies = [
-        Employee::class => EmployeePolicy::class,
-    ];
+
+
+
 }

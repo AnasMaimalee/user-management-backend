@@ -1,0 +1,43 @@
+[90m= [39m[
+    [
+      "[34mname[39m" => "[32mHR[39m",
+      "[34mdescription[39m" => "[32mHandles recruitment and employee welfare[39m",
+    ],
+    [
+      "[34mname[39m" => "[32mFinance[39m",
+      "[34mdescription[39m" => "[32mManages company finances[39m",
+    ],
+    [
+      "[34mname[39m" => "[32mIT[39m",
+      "[34mdescription[39m" => "[32mHandles IT infrastructure and support[39m",
+    ],
+    [
+      "[34mname[39m" => "[32mMarketing[39m",
+      "[34mdescription[39m" => "[32mManages marketing campaigns[39m",
+    ],
+    [
+      "[34mname[39m" => "[32mSales[39m",
+      "[34mdescription[39m" => "[32mHandles sales and client relations[39m",
+    ],
+    [
+      "[34mname[39m" => "[32mOperations[39m",
+      "[34mdescription[39m" => "[32mManages day-to-day operations[39m",
+    ],
+    [
+      "[34mname[39m" => "[32mLegal[39m",
+      "[34mdescription[39m" => "[32mLegal affairs and compliance[39m",
+    ],
+    [
+      "[34mname[39m" => "[32mProcurement[39m",
+      "[34mdescription[39m" => "[32mPurchasing and supplier management[39m",
+    ],
+    [
+      "[34mname[39m" => "[32mCustomer Service[39m",
+      "[34mdescription[39m" => "[32mHandles client queries and support[39m",
+    ],
+    [
+      "[34mname[39m" => "[32mResearch & Development[39m",
+      "[34mdescription[39m" => "[32mInnovates and improves products[39m",
+    ],
+  ]
+

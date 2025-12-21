@@ -12,7 +12,7 @@ class DepartmentController extends Controller
      * Display a listing of the resource.
      */
     public function index()
-    {
+    {   $this->authorize('view', Department::class);
         return response()->json(
             Department::latest()->get()
     );
@@ -23,6 +23,7 @@ class DepartmentController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create departments', Department::class); // checks policy  // Will throw 403 if unauthorized
         $validated = $request->validate([
             'name' => 'required|string|unique:departments,name',
             'description' => 'required|string',
@@ -37,6 +38,7 @@ class DepartmentController extends Controller
      */
     public function show(Department $department)
     {
+        $this->authorize('view departments', $department);
         return response()->json($department);
     }
 
@@ -45,6 +47,7 @@ class DepartmentController extends Controller
      */
     public function update(Request $request, Department $department)
     {
+        $this->authorize('update departments', $department);
         $validated = $request->validate([
             'name' => 'required|string|unique:departments,name',
             'description' => 'required|string',
@@ -56,6 +59,7 @@ class DepartmentController extends Controller
 
     public function updateStatus(Department $department)
     {
+        $this->authorize('update department status', $department);
         // Toggle the status
         $newStatus = $department->status === 'active' ? 'inactive' : 'active';
 

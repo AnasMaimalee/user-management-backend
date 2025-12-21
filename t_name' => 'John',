@@ -1,0 +1,21 @@
+[90m= [39m[34;4mIlluminate\Database\Eloquent\Collection[39;24m {#6279
+    [34mall[39m: [
+      [34;4mApp\Models\Department[39;24m {#2074
+        [34mid[39m: "[32m9567b3e7-d63c-4031-a937-742a0b502ee6[39m",
+        [34mname[39m: "[32mFinance[39m",
+        [34mdescription[39m: "[32mHandles all financial operations[39m",
+        [34mstatus[39m: "[32mactive[39m",
+        [34mcreated_at[39m: "[32m2025-12-21 05:25:35[39m",
+        [34mupdated_at[39m: "[32m2025-12-21 05:25:35[39m",
+      },
+      [34;4mApp\Models\Department[39;24m {#6533
+        [34mid[39m: "[32mb17b55c7-031c-45d3-868f-ef30251fb5a9[39m",
+        [34mname[39m: "[32mHR[39m",
+        [34mdescription[39m: "[32mHandles recruitment and employee welfare[39m",
+        [34mstatus[39m: "[32mactive[39m",
+        [34mcreated_at[39m: "[32m2025-12-21 05:35:03[39m",
+        [34mupdated_at[39m: "[32m2025-12-21 05:35:03[39m",
+      },
+    ],
+  }
+

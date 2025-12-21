@@ -34,14 +34,15 @@ Route::middleware('auth:sanctum')->get('/dashboard', function (Request $request)
         'user' => $request->user()
     ]);
 });
-
-
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'permission:view departments'])->group(function () {
     Route::apiResource('departments', DepartmentController::class);
     Route::patch('departments/{department}/status', [DepartmentController::class, 'updateStatus']);
+});
 
+Route::middleware(['auth:sanctum', 'permission:view employees'])->group(function () {
     Route::apiResource('employees', EmployeeController::class);
     Route::patch('employees/{employee}/status', [EmployeeController::class, 'updateStatus']);
 });
+
 
 
