@@ -15,6 +15,7 @@ class EmployeeController extends Controller
      */
     public function index()
     {
+        $this->authorize('viewAny', Employee::class);
         return Employee::with(['department', 'rank', 'branch'])->latest()->get();
     }
 
@@ -23,6 +24,8 @@ class EmployeeController extends Controller
      */
     public function store(Request $request, Employee $employee)
     {
+        $this->authorize('create', Employee::class);
+
         $data = $request->validate([
             'employee_code' => 'required|unique:employees',
             'first_name' => 'required|string',
@@ -41,6 +44,8 @@ class EmployeeController extends Controller
      */
     public function show(Employee $employee)
     {
+        $this->authorize('view', $employee);
+
         return response()->json($employee, 200);
     }
 
@@ -49,6 +54,8 @@ class EmployeeController extends Controller
      */
     public function update(Request $request, Employee $employee)
     {
+        $this->authorize('update', $employee);
+
         $data = $request->validate([
             'employee_code' => 'required|string',
             'first_name' => 'required|string',
@@ -68,12 +75,15 @@ class EmployeeController extends Controller
      */
     public function destroy(Employee $employee)
     {
+        $this->authorize('delete', $employee);
+
         $employee->delete();
         return response()->json(['message' => 'Employee deleted successfully.'], 200);
     }
 
     public function updateStatus(Request $request, Employee $employee)
     {
+        $this->authorize('updateStatus', $employee);
         $validated = $request->validate([
             'status' => [
                 'required',
