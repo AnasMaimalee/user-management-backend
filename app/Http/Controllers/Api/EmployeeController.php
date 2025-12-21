@@ -33,7 +33,6 @@ class EmployeeController extends Controller
         );
 
         $data = $request->validate([
-            'employee_code' => 'required|unique:employees',
             'first_name' => 'required|string',
             'last_name' => 'required|string',
             'email' => 'required|string|email|unique:employees',
@@ -70,7 +69,6 @@ class EmployeeController extends Controller
         );
 
         $data = $request->validate([
-            'employee_code' => 'required|string',
             'first_name' => 'required|string',
             'last_name' => 'required|string',
             'email' => 'required|string|email',
