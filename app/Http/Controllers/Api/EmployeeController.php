@@ -25,7 +25,6 @@ class EmployeeController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-     */
     public function store(Request $request, Employee $employee)
     {
         abort_unless(
@@ -37,7 +36,7 @@ class EmployeeController extends Controller
             'employee_code' => 'required|unique:employees',
             'first_name' => 'required|string',
             'last_name' => 'required|string',
-            'email' => 'required|email|unique:employees',
+            'email' => 'required|string|email|unique:employees',
             'department_id' => 'required|exists:departments,id',
             'rank_id' => 'required|exists:ranks,id',
             'branch_id' => 'required|exists:branches,id',
@@ -74,7 +73,7 @@ class EmployeeController extends Controller
             'employee_code' => 'required|string',
             'first_name' => 'required|string',
             'last_name' => 'required|string',
-            'email' => 'string|email|unique:employees',
+            'email' => 'required|string|email',
             'department_id' => 'required|exists:departments,id',
             'rank_id' => 'required|exists:ranks,id',
             'branch_id' => 'required|exists:branches,id',
