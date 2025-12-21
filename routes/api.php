@@ -44,13 +44,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 // routes/api.php
-Route::middleware('auth:sanctum')->get('/me', function () {
-    $user = auth()->user();
-    return response()->json([
-        'user' => $user,
-        'permissions' => $user->getAllPermissions()->pluck('name'), // ['create departments', 'update employees', ...]
-    ]);
-});
+Route::middleware('auth:sanctum')->get('/me', [AuthController::class, 'me']);
+
 
 
 

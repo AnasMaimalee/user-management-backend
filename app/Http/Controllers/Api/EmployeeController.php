@@ -13,9 +13,12 @@ class EmployeeController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $this->authorize('viewAny', Employee::class);
+        abort_unless(
+            $request->user()->can('view departments'),
+            403
+        );
         return Employee::with(['department', 'rank', 'branch'])->latest()->get();
     }
 
@@ -24,7 +27,10 @@ class EmployeeController extends Controller
      */
     public function store(Request $request, Employee $employee)
     {
-        $this->authorize('create', Employee::class);
+        abort_unless(
+            $request->user()->can('create departments'),
+            403
+        );
 
         $data = $request->validate([
             'employee_code' => 'required|unique:employees',
@@ -42,9 +48,12 @@ class EmployeeController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Employee $employee)
+    public function show(Employee $employee, Request $request)
     {
-        $this->authorize('view', $employee);
+        abort_unless(
+            $request->user()->can('view departments'),
+            403
+        );
 
         return response()->json($employee, 200);
     }
@@ -54,7 +63,10 @@ class EmployeeController extends Controller
      */
     public function update(Request $request, Employee $employee)
     {
-        $this->authorize('update', $employee);
+        abort_unless(
+            $request->user()->can('update departments'),
+            403
+        );
 
         $data = $request->validate([
             'employee_code' => 'required|string',
@@ -73,9 +85,12 @@ class EmployeeController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Employee $employee)
+    public function destroy(Employee $employee, Request $request)
     {
-        $this->authorize('delete', $employee);
+        abort_unless(
+            $request->user()->can('delete departments'),
+            403
+        );
 
         $employee->delete();
         return response()->json(['message' => 'Employee deleted successfully.'], 200);
@@ -83,7 +98,10 @@ class EmployeeController extends Controller
 
     public function updateStatus(Request $request, Employee $employee)
     {
-        $this->authorize('updateStatus', $employee);
+        abort_unless(
+            $request->user()->can('update department status'),
+            403
+        );
         $validated = $request->validate([
             'status' => [
                 'required',

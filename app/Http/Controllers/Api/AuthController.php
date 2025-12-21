@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -60,5 +61,23 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Logged out successfully'
         ]);
+    }
+
+    public function me()
+    {
+        $user = Auth::user();
+
+        $menus = collect(config('menus'))
+            ->filter(fn ($menu) => $user->can($menu['permission']))
+            ->values();
+
+
+        return response()->json([
+            'user' => $user,
+            'roles' => $user->getRoleNames(), // ['admin', 'hr']
+            'permissions' => $user->getAllPermissions()->pluck('name'), // ['view departments', 'create employees', ...]
+            'menus' => $menus,
+        ]);
+
     }
 }
