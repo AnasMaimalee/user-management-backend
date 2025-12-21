@@ -54,6 +54,22 @@ class DepartmentController extends Controller
         return response()->json($department, 200);
     }
 
+    public function updateStatus(Department $department)
+    {
+        // Toggle the status
+        $newStatus = $department->status === 'active' ? 'inactive' : 'active';
+
+        $department->update(['status' => $newStatus]);
+
+        // Refresh the model to get updated values (optional but safe)
+        $department->refresh();
+
+        return response()->json([
+            'message' => "Department has been " . ($newStatus === 'active' ? 'activated' : 'deactivated') . " successfully!",
+            'data'    => $department,
+        ], 200);
+    }
+
     /**
      * Remove the specified resource from storage.
      */

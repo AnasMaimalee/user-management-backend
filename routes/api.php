@@ -37,6 +37,7 @@ Route::middleware('auth:sanctum')->get('/dashboard', function (Request $request)
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('departments', DepartmentController::class);
+    Route::patch('departments/{department}/status', [DepartmentController::class, 'updateStatus']);
 });
 
 
