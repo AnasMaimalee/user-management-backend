@@ -41,20 +41,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('departments', DepartmentController::class);
     Route::patch('departments/{department}/status', [DepartmentController::class, 'updateStatus']);
 
+    // Custom preview route - MUST be before resource routes
+    Route::get('/employees/next-code', function () {
+        $last = Employee::where('employee_code', 'like', 'EMP-%')
+            ->orderByRaw("CAST(SUBSTR(employee_code, 5) AS UNSIGNED) DESC")
+            ->first();
+
+        $nextNumber = $last ? ((int) substr($last->employee_code, 4)) + 1 : 1;
+
+        return response()->json([
+            'code' => 'EMP-' . str_pad($nextNumber, 2, '0', STR_PAD_LEFT)
+        ]);
+    });
     Route::apiResource('employees', EmployeeController::class);
     Route::patch('employees/{employee}/status', [EmployeeController::class, 'updateStatus']);
     // routes/api.php
-    Route::get('/employees/next-code', function () {
-        $last = Employee::where('employee_code', 'like', 'EMP-%')
-            ->orderByRaw('CAST(SUBSTRING(employee_code, 5) AS UNSIGNED) DESC')
-            ->first();
 
-        $next = $last ? ((int) substr($last->employee_code, 4)) + 1 : 1;
-
-        return response()->json([
-            'code' => 'EMP-' . str_pad($next, 2, '0', STR_PAD_LEFT)
-        ]);
-    });
 
     Route::apiResource('ranks', RankController::class);
     Route::patch('ranks/{rank}/status', [RankController::class, 'updateStatus']);

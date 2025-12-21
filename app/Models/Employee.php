@@ -24,19 +24,21 @@ class Employee extends Model
         });
 
         static::creating(function ($employee) {
-            // Find the highest existing number
-            $last = Employee::where('employee_code', 'like', 'EMP-%')
-                ->orderByRaw('CAST(SUBSTRING(employee_code, 5) AS UNSIGNED) DESC')
-                ->first();
+            if (!$employee->employee_code) {
+                // Lock for concurrency safety (optional but recommended)
+                $last = Employee::where('employee_code', 'like', 'EMP-%')
+                    ->lockForUpdate()
+                    ->orderByRaw("CAST(SUBSTR(employee_code, 5) AS UNSIGNED) DESC")
+                    ->first();
 
-            $nextNumber = 1;
-            if ($last) {
-                $lastNumber = (int) substr($last->employee_code, 4); // after "EMP-"
-                $nextNumber = $lastNumber + 1;
+                $nextNumber = 1;
+                if ($last) {
+                    $lastNumber = (int) substr($last->employee_code, 4);  // after "EMP-"
+                    $nextNumber = $lastNumber + 1;
+                }
+
+                $employee->employee_code = 'EMP-' . str_pad($nextNumber, 2, '0', STR_PAD_LEFT);
             }
-
-            $employee->employee_code = 'EMP-' . str_pad($nextNumber, 2, '0', STR_PAD_LEFT);
-            // → EMP-01, EMP-02, ..., EMP-10, EMP-11, etc.
         });
     }
 
