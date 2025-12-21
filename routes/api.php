@@ -44,5 +44,14 @@ Route::middleware(['auth:sanctum', 'permission:view employees'])->group(function
     Route::patch('employees/{employee}/status', [EmployeeController::class, 'updateStatus']);
 });
 
+// routes/api.php
+Route::middleware('auth:sanctum')->get('/me', function () {
+    $user = auth()->user();
+    return response()->json([
+        'user' => $user,
+        'permissions' => $user->getAllPermissions()->pluck('name'), // ['create departments', 'update employees', ...]
+    ]);
+});
+
 
 
