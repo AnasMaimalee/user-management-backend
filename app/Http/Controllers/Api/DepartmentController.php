@@ -25,6 +25,7 @@ class DepartmentController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|unique:departments,name',
+            'description' => 'required|string',
         ]);
 
         $department = Department::create($validated);
@@ -46,6 +47,7 @@ class DepartmentController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|unique:departments,name',
+            'description' => 'required|string',
         ]);
 
         $department->update($validated);

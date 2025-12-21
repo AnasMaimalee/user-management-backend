@@ -16,7 +16,7 @@ class Department extends Model
         static::creating(fn($m) => $m->id = (string) Str::uuid());
     }
 
-    protected $fillable = ['id','name'];
+    protected $fillable = ['id','name', 'description', 'status'];
 
     public function employees()
     {
