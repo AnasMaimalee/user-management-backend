@@ -40,7 +40,7 @@ class RankController extends Controller
         );
 
         $validated = $request->validate([
-            'tile' => 'required|unique:ranks,name',
+            'name' => 'required|unique:ranks,name',
             'priority' => 'required|integer|min:0|max:100',
         ]);
 
@@ -72,7 +72,7 @@ class RankController extends Controller
             'You are not allowed to update ranks'
         );
         $validated = $request->validate([
-            'tile' => 'required|unique:ranks,name',
+            'name' => 'required|unique:ranks,name',
             'priority' => 'required|integer|min:0|max:100',
         ]);
         $rank->update($validated);

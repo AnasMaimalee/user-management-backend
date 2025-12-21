@@ -21,7 +21,7 @@ class RankFactory extends Factory
     {
         return [
             'id' => Str::uuid(),
-            'title' => $this->faker->jobTitle(),
+            'name' => $this->faker->jobTitle(),
             'priority' => $this->faker->numberBetween(1, 10),
         ];
     }
