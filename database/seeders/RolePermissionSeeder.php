@@ -14,6 +14,8 @@ class RolePermissionSeeder extends Seeder
         $permissions = [
             'view departments', 'create departments', 'update departments', 'delete departments', 'update department status',
             'view employees', 'create employees', 'update employees', 'delete employees', 'update employee status',
+            'view branches', 'create branches', 'update branches', 'delete branches', 'update branch status',
+            'view ranks', 'create ranks', 'update ranks', 'delete ranks', 'update rank status',
         ];
 
         // Create permissions
@@ -32,10 +34,15 @@ class RolePermissionSeeder extends Seeder
         $hr->givePermissionTo([
             'view departments', 'create departments', 'update departments', 'update department status',
             'view employees', 'create employees', 'update employees', 'update employee status',
+            'view branches', 'create branches', 'update branches', 'update branch status',
+            'view ranks', 'create ranks', 'update ranks', 'delete ranks', 'update rank status',
         ]);
 
         $staff->givePermissionTo([
-            'view departments', 'view employees',
+            'view departments',
+            'view employees',
+            'view ranks',
+            'view branches',
         ]);
     }
 }
