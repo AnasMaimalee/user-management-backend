@@ -23,7 +23,7 @@ class RankController extends Controller
         );
 
         return response()->json([
-            Department::latest()->get()
+            Rank::latest()->get()
         ]);
 
     }
