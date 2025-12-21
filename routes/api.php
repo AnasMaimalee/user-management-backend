@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\BranchController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
+use App\Models\Employee;
 use Illuminate\Validation\ValidationException;
 
 Route::post('/register', function(Request $request){
@@ -42,6 +43,18 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('employees', EmployeeController::class);
     Route::patch('employees/{employee}/status', [EmployeeController::class, 'updateStatus']);
+    // routes/api.php
+    Route::get('/employees/next-code', function () {
+        $last = Employee::where('employee_code', 'like', 'EMP-%')
+            ->orderByRaw('CAST(SUBSTRING(employee_code, 5) AS UNSIGNED) DESC')
+            ->first();
+
+        $next = $last ? ((int) substr($last->employee_code, 4)) + 1 : 1;
+
+        return response()->json([
+            'code' => 'EMP-' . str_pad($next, 2, '0', STR_PAD_LEFT)
+        ]);
+    });
 
     Route::apiResource('ranks', RankController::class);
     Route::patch('ranks/{rank}/status', [RankController::class, 'updateStatus']);
