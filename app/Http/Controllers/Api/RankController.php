@@ -100,20 +100,14 @@ class RankController extends Controller
             $request->user()->can('update rank status'),
             403
         );
-        $validated = $request->validate([
-            'status' => [
-                'required',
-                Rule::in(['active', 'inactive', 'suspended']),
-            ],
-        ]);
 
-        $rank->update([
-            'status' => $validated['status'],
-        ]);
+        $newStatus = $rank->status === 'active' ? 'inactive' : 'active';
+
+        $rank->update(['status' => $newStatus]);
 
         return response()->json([
             'message' => 'Rank status updated successfully',
-            'data' => $rank,
+            'data' => $rank->refresh(),
         ]);
     }
 }
