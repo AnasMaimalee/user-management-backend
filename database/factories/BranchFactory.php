@@ -26,6 +26,7 @@ class BranchFactory extends Factory
             'name' => $this->faker->word(),
             'state' => $this->faker->state,
             'country' => 'Nigeria',
+
         ];
     }
 }

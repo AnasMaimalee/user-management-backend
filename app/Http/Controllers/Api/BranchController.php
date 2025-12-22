@@ -20,7 +20,7 @@ class BranchController extends Controller
             403
         );
 
-        return response()->json(Branch::all(), 200);
+        return response()->json(Branch::latest()->get(), 200);
     }
 
     /**
@@ -35,7 +35,7 @@ class BranchController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|unique:branches,name',
-            'city' => 'required|string',
+            'state' => 'required|string',
             'country' => 'required|string',
         ]);
 
@@ -72,7 +72,7 @@ class BranchController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'state' => 'required|string|max:255',
+            'city' => 'required|string|max:255',
             'country' => 'required|string|max:255',
         ]);
 

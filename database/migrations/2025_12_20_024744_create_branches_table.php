@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('state');
             $table->string('country')->default('Nigeria');
+            $table->string('status')->default('active');
             $table->timestamps();
         });
     }
