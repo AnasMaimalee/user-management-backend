@@ -99,23 +99,17 @@ class EmployeeController extends Controller
     public function updateStatus(Request $request, Employee $employee)
     {
         abort_unless(
-            $request->user()->can('update department status'),
+            $request->user()->can('update employee status'),
             403
         );
-        $validated = $request->validate([
-            'status' => [
-                'required',
-                Rule::in(['active', 'inactive', 'suspended']),
-            ],
-        ]);
 
-        $employee->update([
-            'status' => $validated['status'],
-        ]);
+        $newStatus = $employee->status === 'active' ? 'inactive' : 'active';
+
+        $employee->update(['status' => $newStatus]);
 
         return response()->json([
             'message' => 'Employee status updated successfully',
-            'data' => $employee,
+            'data' => $employee->refresh(),
         ]);
     }
 }
