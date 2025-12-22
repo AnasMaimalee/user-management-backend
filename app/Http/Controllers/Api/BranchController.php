@@ -100,23 +100,17 @@ class BranchController extends Controller
     public function updateStatus(Request $request, Branch $branch)
     {
         abort_unless(
-            $request->user()->can('update ranks status'),
+            $request->user()->can('update branch status'),
             403
         );
-        $validated = $request->validate([
-            'status' => [
-                'required',
-                Rule::in(['active', 'inactive', 'suspended']),
-            ],
-        ]);
 
-        $branch->update([
-            'status' => $validated['status'],
-        ]);
+        $newStatus = $branch->status === 'active' ? 'inactive' : 'active';
+
+        $branch->update(['status' => $newStatus]);
 
         return response()->json([
             'message' => 'Branch status updated successfully',
-            'data' => $branch,
+            'data' => $branch->refresh(),
         ]);
     }
 
