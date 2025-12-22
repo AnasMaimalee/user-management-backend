@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class Branch extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     public $incrementing = false;
     protected $skyType = 'string';
@@ -22,5 +23,10 @@ class Branch extends Model
                 $model->id = (string) Str::uuid();
             }
         });
+    }
+
+    public function employees()
+    {
+        return $this->hasMany(Employee::class);
     }
 }
