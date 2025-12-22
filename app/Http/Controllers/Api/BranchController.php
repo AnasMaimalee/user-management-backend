@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
-use App\Models\Rank;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -15,48 +14,56 @@ class BranchController extends Controller
      */
     public function index(Request $request)
     {
-        abort_unless(
-            $request->user()->can('view branches'),
-            403
-        );
+        // Safe check for user
+        if (!$request->user() || !$request->user()->can('view branches')) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
 
-        return response()->json(Branch::latest()->get(), 200);
+        $branches = Branch::select('id', 'name', 'state', 'country', 'status', 'created_at', 'updated_at')
+            ->latest()
+            ->get();
+
+        return response()->json($branches, 200);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request, Branch $branch)
+    public function store(Request $request)
     {
-        abort_unless(
-            $request->user()->can('create branches'),
-            403
-        );
+        if (!$request->user() || !$request->user()->can('create branches')) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
 
         $validated = $request->validate([
-            'name' => 'required|unique:branches,name',
-            'state' => 'required|string',
-            'country' => 'required|string',
+            'name' => 'required|string|unique:branches,name',
+            'state' => 'required|string|max:255',
+            'country' => 'sometimes|string|max:255', // optional, default Nigeria
+            'status' => 'sometimes|in:active,inactive',
         ]);
 
-        $branch = Branch::create($validated);
+        $branch = Branch::create([
+            'name' => $validated['name'],
+            'state' => $validated['state'],
+            'country' => $validated['country'] ?? 'Nigeria',
+            'status' => $validated['status'] ?? 'active',
+        ]);
 
         return response()->json([
             'message' => 'Branch created successfully.',
             'branch' => $branch,
-        ]);
+        ], 201);
     }
-
 
     /**
      * Display the specified resource.
      */
     public function show(Branch $branch, Request $request)
     {
-        abort_unless(
-            $request->user()->can('view branches'),
-            403
-        );
+        if (!$request->user() || !$request->user()->can('view branches')) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
         return response()->json($branch, 200);
     }
 
@@ -65,21 +72,32 @@ class BranchController extends Controller
      */
     public function update(Request $request, Branch $branch)
     {
-        abort_unless(
-            $request->user->can('uodate ranks'),
-            403
-        );
+        if (!$request->user() || !$request->user()->can('update branches')) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'city' => 'required|string|max:255',
-            'country' => 'required|string|max:255',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('branches')->ignore($branch->id),
+            ],
+            'state' => 'required|string|max:255',
+            'country' => 'sometimes|string|max:255',
+            'status' => 'sometimes|in:active,inactive',
         ]);
 
-        $branch->update($validated);
+        $branch->update([
+            'name' => $validated['name'],
+            'state' => $validated['state'],
+            'country' => $validated['country'] ?? $branch->country,
+            'status' => $validated['status'] ?? $branch->status,
+        ]);
+
         return response()->json([
-            'message' => 'Rank updated successfully.',
-            'rank' => $branch,
+            'message' => 'Branch updated successfully.',
+            'branch' => $branch->refresh(),
         ]);
     }
 
@@ -88,21 +106,23 @@ class BranchController extends Controller
      */
     public function destroy(Branch $branch, Request $request)
     {
-        abort_unless(
-            $request->user()->can('delete branches'),
-            403
-        );
+        if (!$request->user() || !$request->user()->can('delete branches')) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
 
         $branch->delete();
-        return response()->json(['message' => 'Branch successfully deleted.']);
+
+        return response()->json(['message' => 'Branch deleted successfully.']);
     }
 
+    /**
+     * Toggle branch status
+     */
     public function updateStatus(Request $request, Branch $branch)
     {
-        abort_unless(
-            $request->user()->can('update branch status'),
-            403
-        );
+        if (!$request->user() || !$request->user()->can('update branch status')) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
 
         $newStatus = $branch->status === 'active' ? 'inactive' : 'active';
 
@@ -113,5 +133,4 @@ class BranchController extends Controller
             'data' => $branch->refresh(),
         ]);
     }
-
 }
