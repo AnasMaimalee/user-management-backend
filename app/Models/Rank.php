@@ -18,5 +18,5 @@ class Rank extends Model
         });
     }
 
-    protected $fillable = ['name', 'priority'];
+    protected $fillable = ['name', 'priority', 'status'];
 }

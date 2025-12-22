@@ -23,6 +23,7 @@ class RankFactory extends Factory
             'id' => Str::uuid(),
             'name' => $this->faker->jobTitle(),
             'priority' => $this->faker->numberBetween(1, 10),
+            'status' => $this->faker->randomElement(['active', 'inactive']),
         ];
     }
 }
