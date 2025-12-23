@@ -61,4 +61,24 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'employee_id');
+    }
+
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isHr()
+    {
+        return $this->role === 'hr';
+    }
+
+    public function isEmployeePortelUser()
+    {
+        return $this->employee_id !== null;
+    }
 }

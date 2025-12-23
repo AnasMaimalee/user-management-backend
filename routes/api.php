@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
 use App\Models\Employee;
+use App\Http\Controllers\EmployeeInvitationController;
+
 use Illuminate\Validation\ValidationException;
 
 Route::post('/register', function(Request $request){
@@ -66,6 +68,17 @@ Route::middleware('auth:sanctum')->group(function () {
 
 });
 
+// routes/web.php
+
+
+
+Route::post('/set-password/{employee}', [EmployeeInvitationController::class, 'store']);
+Route::get('/invitation/{employee}', [EmployeeInvitationController::class, 'show'])
+    ->name('invitation.set-password')
+    ->middleware('signed');
+// routes/api.php
+Route::post('/employees/{employee}/send-invitation', [EmployeeInvitationController::class, 'sendInvitation'])
+    ->middleware('auth:sanctum');
 
 // routes/api.php
 Route::middleware('auth:sanctum')->get('/me', [AuthController::class, 'me']);
