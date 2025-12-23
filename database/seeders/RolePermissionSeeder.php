@@ -35,7 +35,7 @@ class RolePermissionSeeder extends Seeder
             'view departments', 'create departments', 'update departments', 'update department status',
             'view employees', 'create employees', 'update employees', 'update employee status',
             'view branches', 'create branches', 'update branches', 'update branch status',
-            'view ranks', 'create ranks', 'update ranks', 'delete ranks', 'update rank status',
+            'view ranks', 'create ranks', 'update ranks', 'update rank status',
         ]);
 
         $staff->givePermissionTo([
