@@ -62,22 +62,37 @@ class AuthController extends Controller
             'message' => 'Logged out successfully'
         ]);
     }
-
-    public function me()
+    public function me(Request $request)
     {
-        $user = Auth::user();
+        $user = $request->user();
 
-        $menus = collect(config('menus'))
-            ->filter(fn ($menu) => $user->can($menu['permission']))
-            ->values();
+        $menus = [];
 
+        // Super Admin or Admin
+        if ($user->hasRole('super_admin') || $user->hasRole('admin')) {
+            $menus = [
+                ['title' => 'Departments', 'route' => '/departments', 'icon' => 'HomeOutlined'],
+                ['title' => 'Employees', 'route' => '/employees', 'icon' => 'UserOutlined'],
+                ['title' => 'Branches', 'route' => '/branches', 'icon' => 'MapPinOutlined'],
+                ['title' => 'Ranks', 'route' => '/ranks', 'icon' => 'AcademicCapOutlined'],
+                ['title' => 'Leaves', 'route' => '/leaves', 'icon' => 'UserOutlined'],
+                ['title' => 'Settings', 'route' => '/settings', 'icon' => 'SettingOutlined'],
+            ];
+        }
+        if ($user->hasRole('staff')) {
+            $menus = [
+                ['title' => 'My Tasks', 'route' => '/tasks', 'icon' => 'CheckCircleOutlined'],
+                ['title' => 'Leaves', 'route' => '/leaves', 'icon' => 'UserOutlined'],
+            ];
+        }
 
         return response()->json([
             'user' => $user,
-            'roles' => $user->getRoleNames(), // ['admin', 'hr']
-            'permissions' => $user->getAllPermissions()->pluck('name'), // ['view departments', 'create employees', ...]
             'menus' => $menus,
+            'roles' => $user->roles()->pluck('name'),
+            'permissions' => $user->getAllPermissions()->pluck('name'),
         ]);
-
     }
+
+
 }
