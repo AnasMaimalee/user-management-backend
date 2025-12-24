@@ -30,4 +30,10 @@ return [
         'icon' => 'SettingOutlined',
         'route' => '/settings',
     ],
+    [
+        'title' => 'Leaves',
+        'permission' => 'view leaves',
+        'icon' => 'UserOutlined',
+        'route' => '/leaves',
+    ]
 ];

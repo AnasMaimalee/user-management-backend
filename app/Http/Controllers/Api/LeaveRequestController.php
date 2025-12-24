@@ -14,7 +14,7 @@ class LeaveRequestController extends Controller
 
     public function index(Request $request)
     {
-        abort_unless($request->user()->can('view leave request'), 403);
+        abort_unless($request->user()->can('view leaves'), 403);
 
         return LeaveRequest::with(['employee', 'department', 'rank', 'branch'])
             ->latest()

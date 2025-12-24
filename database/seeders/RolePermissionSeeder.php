@@ -16,6 +16,7 @@ class RolePermissionSeeder extends Seeder
             'view employees', 'create employees', 'update employees', 'delete employees', 'update employee status',
             'view branches', 'create branches', 'update branches', 'delete branches', 'update branch status',
             'view ranks', 'create ranks', 'update ranks', 'delete ranks', 'update rank status',
+            'view leaves', 'update leaves', 'delete leaves', 'update leave status',
         ];
 
         // Create permissions
