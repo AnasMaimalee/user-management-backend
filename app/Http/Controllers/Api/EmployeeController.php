@@ -34,6 +34,7 @@ class EmployeeController extends Controller
             'department_id'=> 'nullable|exists:departments,id',
             'rank_id'      => 'nullable|exists:ranks,id',
             'branch_id'    => 'nullable|exists:branches,id',
+            'role'         => 'required|string|max:255',
         ]);
 
         $employee = Employee::create($data);
@@ -46,14 +47,14 @@ class EmployeeController extends Controller
                 'name' => $employee->first_name . ' ' . $employee->last_name,
                 'email' => $employee->email,
                 'password' => Hash::make($plainPassword),
-                'role' => 'staff',
+                'role' => $employee->role,
                 'employee_id' => $employee->id,
             ]);
-
             // Pass the plain password to the mailable
             Mail::to($employee->email)->send(
                 new EmployeeWelcomeMail($employee, $plainPassword)
             );
+
         }
 
         return response()->json([

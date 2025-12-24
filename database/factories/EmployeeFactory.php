@@ -30,7 +30,7 @@ class EmployeeFactory extends Factory
             'department_id' => null,
             'branch_id' => null,
             'rank_id' => null,
-
+            'role' => 'staff',
             'status' => fake()->randomElement(['active', 'inactive']),
 
         ];

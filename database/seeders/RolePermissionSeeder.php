@@ -44,6 +44,7 @@ class RolePermissionSeeder extends Seeder
             'view employees',
             'view ranks',
             'view branches',
+            'view leaves'
         ]);
     }
 }
