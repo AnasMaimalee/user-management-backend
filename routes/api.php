@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\RankController;
 use App\Http\Controllers\Api\BranchController;
+use App\Http\Controllers\Api\LeaveRequestController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\User;
@@ -79,6 +80,34 @@ Route::get('/invitation/{employee}', [EmployeeInvitationController::class, 'show
 // routes/api.php
 Route::post('/employees/{employee}/send-invitation', [EmployeeInvitationController::class, 'sendInvitation'])
     ->middleware('auth:sanctum');
+
+Route::middleware('auth:sanctum')->group(function () {
+
+    // =====================
+    // Employee (Staff)
+    // =====================
+    Route::middleware('role:staff')->group(function () {
+
+        // Create leave request
+        Route::post('/leaves', [LeaveRequestController::class, 'store']);
+
+        // View own leave requests
+        Route::get('/leaves/my', [LeaveRequestController::class, 'myLeaves']);
+    });
+
+    // =====================
+    // HR & Admin
+    // =====================
+    Route::middleware('role:admin|hr')->group(function () {
+
+        // View all leave requests
+        Route::get('/leaves', [LeaveRequestController::class, 'index']);
+
+        // Approve / Reject leave
+        Route::patch('/leaves/{leave}', [LeaveRequestController::class, 'update']);
+    });
+
+});
 
 // routes/api.php
 Route::middleware('auth:sanctum')->get('/me', [AuthController::class, 'me']);
