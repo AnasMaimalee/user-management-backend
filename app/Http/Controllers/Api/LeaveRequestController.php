@@ -16,10 +16,15 @@ class LeaveRequestController extends Controller
     {
         abort_unless($request->user()->can('view leaves'), 403);
 
-        return LeaveRequest::with(['employee', 'department', 'rank', 'branch'])
+        return LeaveRequest::with([
+            'employee.department',
+            'employee.rank',
+            'employee.branch',
+        ])
             ->latest()
             ->get();
     }
+
     public function myLeaves()
     {
         return LeaveRequest::where('user_id', Auth::id())
@@ -52,24 +57,36 @@ class LeaveRequestController extends Controller
 
     public function update(Request $request, LeaveRequest $leave)
     {
-        $request->validate([
+        // Only allow update if status is pending
+        if ($leave->status !== 'pending') {
+            return response()->json([
+                'message' => 'This leave request has already been processed.'
+            ], 422);
+        }
+
+        $validated = $request->validate([
             'status' => 'required|in:approved,rejected',
-            'admin_note' => 'nullable|string|min:5|max:255',
+            'admin_note' => 'nullable|string|max:255',
         ]);
 
+        if ($request->status === 'rejected') {
+            $request->validate([
+                'admin_note' => 'required|string|min:10|max:255',
+            ]);
+        }
         $leave->update([
-            'status' => $request->status,
-            'admin_note' => $request->admin_note,
-            'reviewed_by' => auth()->id(),
-            'reviewed_at' => now(),
+            'status'       => $validated['status'],
+            'admin_note'   => $validated['admin_note'] ?? null,
+            'reviewed_by'  => auth()->id(),
+            'reviewed_at'  => now(),
         ]);
 
-        Mail::to($leave->employee->email)
-            ->send(new LeaveStatusMail($leave));
+        // Send email notification
+        Mail::to($leave->employee->email)->send(new LeaveStatusMail($leave));
 
         return response()->json([
-            'message' => 'Leave Status updated successfully.',
-            'leave_request' => $leave
+            'message'        => 'Leave request ' . $validated['status'] . ' successfully.',
+            'leave_request'  => $leave->load('employee')
         ]);
     }
 }

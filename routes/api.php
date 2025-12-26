@@ -116,7 +116,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ===== Admin & HR =====
-    Route::middleware('role:admin|hr')->group(function () {
+    Route::middleware('auth:sanctum')->group(function () {
         Route::get('/leaves', [LeaveRequestController::class, 'index']);
         Route::patch('/leaves/{leave}', [LeaveRequestController::class, 'update']);
     });

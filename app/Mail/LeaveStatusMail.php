@@ -4,7 +4,6 @@ namespace App\Mail;
 
 use App\Models\LeaveRequest;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -14,6 +13,8 @@ class LeaveStatusMail extends Mailable
 {
     use Queueable, SerializesModels;
 
+    public $leave;
+
     /**
      * Create a new message instance.
      */
@@ -22,24 +23,13 @@ class LeaveStatusMail extends Mailable
         $this->leave = $leave;
     }
 
-    public function build()
-    {
-        return $this
-            ->subject('Leave Status Update' . ucfirst($this->leave->status))
-            ->view('emails.leave-status')
-            ->with([
-                'leave' => $this->leave,
-                'employee' => $this->leave->employee,
-                'reviewer' => $this->leave->reviewer,
-            ]);
-    }
     /**
      * Get the message envelope.
      */
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Leave Status Mail',
+            subject: 'Your Leave Request Has Been ' . ucfirst($this->leave->status),
         );
     }
 
@@ -49,14 +39,17 @@ class LeaveStatusMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'view.name',
+            view: 'emails.leave-status', // ← Correct view name
+            with: [
+                'leave' => $this->leave,
+                'employee' => $this->leave->employee,
+                'reviewer' => $this->leave->reviewer, // assuming you have reviewed_by relationship
+            ]
         );
     }
 
     /**
      * Get the attachments for the message.
-     *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
      */
     public function attachments(): array
     {
