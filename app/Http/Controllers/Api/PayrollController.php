@@ -59,7 +59,7 @@ class PayrollController extends Controller
             ]);
 
             // Generate payslip PDF
-            $pdf = Pdf::loadView('emails.payslip', ['payroll' => $payroll]);
+            $pdf = Pdf::loadView('emails.payslip-email', ['payroll' => $payroll]);
             $path = 'payslips/' . $payroll->id . '.pdf';
             Storage::disk('public')->put($path, $pdf->output());
             $payroll->payslip_path = $path;

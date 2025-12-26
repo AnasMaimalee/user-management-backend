@@ -9,13 +9,15 @@ use Illuminate\Database\Eloquent\Model;
 use Laravel\Sanctum\HasApiTokens;
 use App\Notifications\EmployeeResetPasswordNotification;
 use Illuminate\Support\Str;
+use Spatie\Permission\Traits\HasRoles;
+
 class Employee extends Model
 
 {
 
 
 
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
     public $incrementing = false;
     protected $keyType = 'string';

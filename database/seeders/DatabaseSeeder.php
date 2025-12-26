@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             EmployeeSeeder::class,
             BranchSeeder::class,
             RankSeeder::class,
+            PayrollSeeder::class,
         ]);
 
         User::factory()->create([
