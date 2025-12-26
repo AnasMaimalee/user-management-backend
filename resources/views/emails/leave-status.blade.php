@@ -19,38 +19,62 @@
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border-left: 6px solid #16a34a; /* default green for approved */
+        }
+        .container.rejected {
+            border-left-color: #dc2626;
         }
         .header {
             text-align: center;
             padding: 40px 20px;
-            color: #fff;
-        }
-        .header.approved { background-color: #16a34a; }
-        .header.rejected { background-color: #dc2626; }
-        .header h1 { font-size: 28px; margin: 0; }
-        .header p { font-size: 16px; margin-top: 8px; opacity: 0.9; }
-        .content { padding: 30px 20px; }
-        .content p { margin: 16px 0; font-size: 16px; line-height: 1.5; }
-        .badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 999px;
+            font-size: 28px;
             font-weight: bold;
-            color: #fff;
-            margin-left: 5px;
+            color: #333;
         }
-        .badge.approved { background-color: #16a34a; }
-        .badge.rejected { background-color: #dc2626; }
+        .header.approved {
+            color: #16a34a;
+        }
+        .header.rejected {
+            color: #dc2626;
+        }
+        .content {
+            padding: 30px 20px;
+        }
+        .content p {
+            margin: 16px 0;
+            font-size: 16px;
+            line-height: 1.5;
+        }
         .details {
             background-color: #f9fafb;
-            border-left: 4px solid #16a34a;
             padding: 20px;
-            border-radius: 6px;
+            border-radius: 8px;
             margin: 20px 0;
         }
-        .details.rejected { border-left-color: #dc2626; }
-        .details h3 { margin-top: 0; margin-bottom: 12px; font-size: 18px; }
-        .details p { margin: 6px 0; font-size: 15px; }
+        .details h3 {
+            margin-top: 0;
+            margin-bottom: 12px;
+            font-size: 18px;
+            color: #111827;
+        }
+        .details p {
+            margin: 6px 0;
+            font-size: 15px;
+        }
+        .status {
+            font-weight: bold;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 999px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .status.approved {
+            background-color: #16a34a;
+        }
+        .status.rejected {
+            background-color: #dc2626;
+        }
         .admin-note {
             background-color: #fff7ed;
             border-left: 4px solid #f59e0b;
@@ -58,7 +82,11 @@
             border-radius: 6px;
             margin: 20px 0;
         }
-        .admin-note p { margin: 0; font-style: italic; color: #b45309; }
+        .admin-note p {
+            margin: 0;
+            font-style: italic;
+            color: #b45309;
+        }
         .button {
             display: inline-block;
             background-color: #2563eb;
@@ -70,7 +98,9 @@
             transition: background 0.2s;
             margin-top: 20px;
         }
-        .button:hover { background-color: #1d4ed8; }
+        .button:hover {
+            background-color: #1d4ed8;
+        }
         .footer {
             text-align: center;
             padding: 20px;
@@ -78,15 +108,16 @@
             color: #6b7280;
             background-color: #f9fafb;
         }
-        .footer p { margin: 4px 0; }
+        .footer p {
+            margin: 4px 0;
+        }
     </style>
 </head>
 <body>
-<div class="container">
+<div class="container {{ $leave->status === 'rejected' ? 'rejected' : '' }}">
     <!-- Header -->
     <div class="header {{ $leave->status }}">
-        <h1>Leave Request {{ ucfirst($leave->status) }}</h1>
-        <p>Your request has been reviewed</p>
+        Leave Request {{ ucfirst($leave->status) }}
     </div>
 
     <!-- Content -->
@@ -95,11 +126,11 @@
 
         <p>
             Your leave request has been
-            <span class="badge {{ $leave->status }}">{{ strtoupper($leave->status) }}</span>
+            <span class="status {{ $leave->status }}">{{ strtoupper($leave->status) }}</span>
         </p>
 
         <!-- Leave Details -->
-        <div class="details {{ $leave->status }}">
+        <div class="details">
             <h3>Leave Details</h3>
             <p><strong>Start Date:</strong> {{ \Carbon\Carbon::parse($leave->start_date)->format('l, F j, Y') }}</p>
             <p><strong>End Date:</strong> {{ \Carbon\Carbon::parse($leave->end_date)->format('l, F j, Y') }}</p>
@@ -125,7 +156,7 @@
 
         <!-- Login Button -->
         <p style="text-align:center;">
-            <a href="{{ url('/login') }}" class="button">Log in to HR Portal</a>
+            <a href="http://localhost:3001/login" class="button">Log in to HR Portal</a>
         </p>
     </div>
 
