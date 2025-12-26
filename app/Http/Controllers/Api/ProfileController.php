@@ -53,4 +53,26 @@ class ProfileController extends Controller
             'user' => $user
         ]);
     }
+
+    public function updateImage(Request $request)
+    {
+        $request->validate([
+            'profile_image' => 'required|image|max:2048'
+        ]);
+
+        $user = $request->user();
+
+        if ($user->profile_image) {
+            Storage::disk('public')->delete($user->profile_image);
+        }
+
+        $path = $request->file('profile_image')->store('profiles', 'public');
+        $user->profile_image = $path;
+        $user->save();
+
+        return response()->json([
+            'image' => $path
+        ]);
+    }
+
 }

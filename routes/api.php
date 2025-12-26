@@ -146,3 +146,11 @@ Route::middleware('auth:sanctum')->group(function () {
 // routes/api.php
 Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink']);
 Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->name('password.reset');
+
+// routes/api.php
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'show']);
+    Route::post('/profile/image', [ProfileController::class, 'updateImage']);
+    Route::post('/profile/password', [ProfileController::class, 'updatePassword']);
+});
