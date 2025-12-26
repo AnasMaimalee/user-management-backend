@@ -87,6 +87,7 @@ class AuthController extends Controller
                 ['title' => 'Branches', 'route' => '/branches', 'icon' => 'MapPinOutlined'],
                 ['title' => 'Ranks', 'route' => '/ranks', 'icon' => 'AcademicCapOutlined'],
                 ['title' => 'Leaves', 'route' => '/leaves', 'icon' => 'UserOutlined'],
+                ['title' => 'Payroll', 'route' => '/payroll', 'icon' => 'UserOutlined'],
                 ['title' => 'Settings', 'route' => '/setting/profile', 'icon' => 'SettingOutlined'],
             ];
         }
@@ -95,6 +96,8 @@ class AuthController extends Controller
             $menus = [
                 ['title' => 'My Tasks', 'route' => '/tasks', 'icon' => 'CheckCircleOutlined'],
                 ['title' => 'Leaves', 'route' => '/leaves/my', 'icon' => 'UserOutlined'],
+                ['title' => 'Payroll', 'route' => '/payroll/my', 'icon' => 'UserOutlined'],
+
             ];
         }
 

@@ -16,6 +16,8 @@ use App\Http\Controllers\Api\LeaveRequestController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\EmployeeInvitationController;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
+use App\Http\Controllers\Api\PayrollController;
+
 /*
 |--------------------------------------------------------------------------
 | Public Auth Routes
@@ -153,4 +155,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::post('/profile/image', [ProfileController::class, 'updateImage']);
     Route::post('/profile/password', [ProfileController::class, 'updatePassword']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    // Admin/HR routes
+    Route::get('/payrolls', [PayrollController::class, 'index']);
+    Route::post('/payrolls/run', [PayrollController::class, 'run']);
+
+    // Employee routes
+    Route::get('/payrolls/my', [PayrollController::class, 'myPayslips']);
+    Route::get('/payrolls/{payroll}/download', [PayrollController::class, 'downloadPayslip']);
 });
