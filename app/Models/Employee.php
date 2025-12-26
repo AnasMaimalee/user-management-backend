@@ -90,6 +90,16 @@ class Employee extends Model
         return $this->hasOne(User::class, 'employee_id');
     }
 
+    public function wallet()
+    {
+        return $this->hasOne(Wallet::class);
+    }
+
+    public function walletTransactions()
+    {
+        return $this->hasManyThrough(WalletTransaction::class, Wallet::class);
+    }
+
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new EmployeeResetPasswordNotification($token));

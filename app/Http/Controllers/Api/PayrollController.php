@@ -96,20 +96,14 @@ class PayrollController extends Controller
                 $wallet = $employee->wallet ?? Wallet::create([
                     'id' => (string) Str::uuid(),
                     'employee_id' => $employee->id,
-                    'balance' => 0,
                     'monthly_savings' => $savings,
                 ]);
 
-                $wallet->balance += $savings;
-                $wallet->save();
-
-                // Create transaction record
-                $wallet->transactions()->create([
-                    'id' => (string) Str::uuid(),
-                    'amount' => $savings,
-                    'type' => 'deposit',
-                    'description' => "Monthly savings from payroll {$month}/{$year}",
-                ]);
+                $wallet->addTransaction(
+                    amount: $savings,
+                    type: 'deposit',
+                    description: "Monthly savings from payroll {$month}/{$year}"
+                );
             }
 
             $payrolls[] = $payroll;

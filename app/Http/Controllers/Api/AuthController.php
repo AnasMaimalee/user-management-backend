@@ -82,6 +82,7 @@ class AuthController extends Controller
 
         if ($user->hasRole('super_admin') || $user->hasRole('admin')) {
             $menus = [
+                ['title' => 'Wallet', 'route' => '/wallet/my', 'icon' => 'HomeOutlined'],
                 ['title' => 'Departments', 'route' => '/departments', 'icon' => 'HomeOutlined'],
                 ['title' => 'Employees', 'route' => '/employees', 'icon' => 'UserOutlined'],
                 ['title' => 'Branches', 'route' => '/branches', 'icon' => 'MapPinOutlined'],
@@ -94,6 +95,7 @@ class AuthController extends Controller
 
         if ($user->hasRole('staff')) {
             $menus = [
+                ['title' => 'Wallet', 'route' => '/wallet/my', 'icon' => 'HomeOutlined'],
                 ['title' => 'My Tasks', 'route' => '/tasks', 'icon' => 'CheckCircleOutlined'],
                 ['title' => 'Leaves', 'route' => '/leaves/my', 'icon' => 'UserOutlined'],
                 ['title' => 'Payroll', 'route' => '/payroll/my', 'icon' => 'UserOutlined'],

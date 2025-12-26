@@ -2,11 +2,19 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Hash;
 
-use App\Models\User;
+/*
+|--------------------------------------------------------------------------
+| Models
+|--------------------------------------------------------------------------
+*/
 use App\Models\Employee;
 
+/*
+|--------------------------------------------------------------------------
+| Controllers
+|--------------------------------------------------------------------------
+*/
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\EmployeeController;
@@ -17,20 +25,42 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\EmployeeInvitationController;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\PayrollController;
+use App\Http\Controllers\Api\WalletController;
 
 /*
 |--------------------------------------------------------------------------
-| Public Auth Routes
+| PUBLIC AUTH ROUTES
 |--------------------------------------------------------------------------
 */
 
-
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login',    [AuthController::class, 'login']);
 
 /*
 |--------------------------------------------------------------------------
-| Protected Routes (Auth)
+| PASSWORD RESET (PUBLIC)
+|--------------------------------------------------------------------------
+*/
+
+Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink']);
+Route::post('/reset-password',  [PasswordResetController::class, 'resetPassword'])
+    ->name('password.reset');
+
+/*
+|--------------------------------------------------------------------------
+| EMPLOYEE INVITATION (PUBLIC - SIGNED)
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/invitation/{employee}', [EmployeeInvitationController::class, 'show'])
+    ->middleware('signed')
+    ->name('invitation.set-password');
+
+Route::post('/set-password/{employee}', [EmployeeInvitationController::class, 'store']);
+
+/*
+|--------------------------------------------------------------------------
+| PROTECTED ROUTES (AUTHENTICATED)
 |--------------------------------------------------------------------------
 */
 
@@ -38,7 +68,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Auth / Profile
+    | AUTH / USER
     |--------------------------------------------------------------------------
     */
 
@@ -51,7 +81,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Departments
+    | PROFILE
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/profile',  [ProfileController::class, 'show']);
+    Route::post('/profile', [ProfileController::class, 'update']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | DEPARTMENTS
     |--------------------------------------------------------------------------
     */
 
@@ -60,7 +99,25 @@ Route::middleware('auth:sanctum')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Employees
+    | RANKS
+    |--------------------------------------------------------------------------
+    */
+
+    Route::apiResource('ranks', RankController::class);
+    Route::patch('ranks/{rank}/status', [RankController::class, 'updateStatus']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | BRANCHES
+    |--------------------------------------------------------------------------
+    */
+
+    Route::apiResource('branches', BranchController::class);
+    Route::patch('branches/{branch}/status', [BranchController::class, 'updateStatus']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | EMPLOYEES
     |--------------------------------------------------------------------------
     */
 
@@ -70,19 +127,18 @@ Route::middleware('auth:sanctum')->group(function () {
             ->orderByRaw("CAST(SUBSTR(employee_code, 5) AS UNSIGNED) DESC")
             ->first();
 
-        $nextNumber = $last
+        $next = $last
             ? ((int) substr($last->employee_code, 4)) + 1
             : 1;
 
         return response()->json([
-            'code' => 'EMP-' . str_pad($nextNumber, 2, '0', STR_PAD_LEFT),
+            'code' => 'EMP-' . str_pad($next, 2, '0', STR_PAD_LEFT),
         ]);
     });
 
     Route::apiResource('employees', EmployeeController::class);
     Route::patch('employees/{employee}/status', [EmployeeController::class, 'updateStatus']);
 
-    // Send invitation email
     Route::post(
         '/employees/{employee}/send-invitation',
         [EmployeeInvitationController::class, 'sendInvitation']
@@ -90,79 +146,45 @@ Route::middleware('auth:sanctum')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Ranks
+    | LEAVE MANAGEMENT
     |--------------------------------------------------------------------------
     */
 
-    Route::apiResource('ranks', RankController::class);
-    Route::patch('ranks/{rank}/status', [RankController::class, 'updateStatus']);
+    // Staff
+    Route::post('/leaves',     [LeaveRequestController::class, 'store']);
+    Route::get('/leaves/my',   [LeaveRequestController::class, 'myLeaves']);
+
+    // Admin / HR
+    Route::get('/leaves',            [LeaveRequestController::class, 'index']);
+    Route::patch('/leaves/{leave}',  [LeaveRequestController::class, 'update']);
 
     /*
     |--------------------------------------------------------------------------
-    | Branches
+    | PAYROLL
     |--------------------------------------------------------------------------
     */
 
-    Route::apiResource('branches', BranchController::class);
-    Route::patch('branches/{branch}/status', [BranchController::class, 'updateStatus']);
+    // Employee
+    Route::get('/payrolls/my',                [PayrollController::class, 'myPayslips']);
+    Route::get('/payrolls/{payroll}/download',[PayrollController::class, 'downloadPayslip']);
 
-    /*
-    |--------------------------------------------------------------------------
-    | Leave Management
-    |--------------------------------------------------------------------------
-    */
-
-    // ===== Staff =====
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::post('/leaves', [LeaveRequestController::class, 'store']);
-        Route::get('/leaves/my', [LeaveRequestController::class, 'myLeaves']);
-    });
-
-    // ===== Admin & HR =====
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::get('/leaves', [LeaveRequestController::class, 'index']);
-        Route::patch('/leaves/{leave}', [LeaveRequestController::class, 'update']);
-    });
-});
-
-/*
-|--------------------------------------------------------------------------
-| Invitation & Password Setup (Public)
-|--------------------------------------------------------------------------
-*/
-
-Route::get('/invitation/{employee}', [EmployeeInvitationController::class, 'show'])
-    ->middleware('signed')
-    ->name('invitation.set-password');
-
-Route::post('/set-password/{employee}', [EmployeeInvitationController::class, 'store']);
-
-
-// routes/api.php
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'show']);
-    Route::post('/profile', [ProfileController::class, 'update']);
-});
-
-// routes/api.php
-// routes/api.php
-Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink']);
-Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->name('password.reset');
-
-// routes/api.php
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'show']);
-    Route::post('/profile/image', [ProfileController::class, 'updateImage']);
-    Route::post('/profile/password', [ProfileController::class, 'updatePassword']);
-});
-
-Route::middleware('auth:sanctum')->group(function () {
-    // Admin/HR routes
-    Route::get('/payrolls', [PayrollController::class, 'index']);
+    // Admin / HR
+    Route::get('/payrolls',      [PayrollController::class, 'index']);
     Route::post('/payrolls/run', [PayrollController::class, 'run']);
 
-    // Employee routes
-    Route::get('/payrolls/my', [PayrollController::class, 'myPayslips']);
-    Route::get('/payrolls/{payroll}/download', [PayrollController::class, 'downloadPayslip']);
+    /*
+    |--------------------------------------------------------------------------
+    | WALLET
+    |--------------------------------------------------------------------------
+    */
+
+    // Employee
+    Route::get('/wallet/my',        [WalletController::class, 'myWallet']);
+    Route::post('/wallet/withdraw', [WalletController::class, 'requestWithdrawal']);
+
+    // Admin / HR
+    Route::middleware('role:admin|hr')->group(function () {
+        Route::get('/wallet/pending-withdrawals', [WalletController::class, 'pendingWithdrawals']);
+        Route::post('/wallet/process/{transaction}', [WalletController::class, 'processWithdrawal']);
+    });
 });
