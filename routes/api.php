@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\RankController;
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\LeaveRequestController;
+use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\EmployeeInvitationController;
 
 /*
@@ -133,3 +134,10 @@ Route::get('/invitation/{employee}', [EmployeeInvitationController::class, 'show
     ->name('invitation.set-password');
 
 Route::post('/set-password/{employee}', [EmployeeInvitationController::class, 'store']);
+
+
+// routes/api.php
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'show']);
+    Route::post('/profile', [ProfileController::class, 'update']);
+});
