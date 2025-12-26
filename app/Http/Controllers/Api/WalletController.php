@@ -95,4 +95,45 @@ class WalletController extends Controller
             'transaction' => $transaction,
         ]);
     }
+
+
+    // Employee: Set savings goal
+    public function setGoal(Request $request)
+    {
+        $request->validate([
+            'goal_name' => 'required|string|max:100',
+            'goal_amount' => 'required|numeric|min:1000',
+            'goal_target_date' => 'required|date|after:today',
+        ]);
+
+        $wallet = auth()->user()->employee->wallet;
+
+        $wallet->update([
+            'goal_name' => $request->goal_name,
+            'goal_amount' => $request->goal_amount,
+            'goal_target_date' => $request->goal_target_date,
+        ]);
+
+        return response()->json(['message' => 'Savings goal set successfully!', 'wallet' => $wallet]);
+    }
+
+    // Admin: Manual deposit (e.g., bonus)
+    public function manualDeposit(Request $request, $employeeId)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:1000',
+            'description' => 'required|string|max:500',
+        ]);
+
+        $wallet = Wallet::where('employee_id', $employeeId)->firstOrFail();
+
+        $wallet->addTransaction(
+            amount: $request->amount,
+            type: 'deposit',
+            description: $request->description,
+            status: 'approved'
+        );
+
+        return response()->json(['message' => 'Deposit added successfully']);
+    }
 }

@@ -22,6 +22,7 @@ class Employee extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
+    protected $guard_name = 'web';
     protected static function booted()
     {
         static::creating(function ($model) {

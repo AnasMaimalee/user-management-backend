@@ -64,23 +64,23 @@ class AuthController extends Controller
     }
     public function me(Request $request)
     {
-        $user = $request->user()->load('employee');
+        $user = $request->user()->load('employee.roles');
 
-        $profileImageUrl = null;
-
-        if ($user->employee && $user->employee->profile_image) {
-            $profileImageUrl = asset('storage/' . $user->employee->profile_image);
-        }
-
-
-        // Attach full image URL (IMPORTANT)
-        $user->profile_image_url = $user->profile_image
-            ? asset('storage/' . $user->profile_image)
-            : null;
+        $employee = $user->employee;
 
         $menus = [];
 
-        if ($user->hasRole('super_admin') || $user->hasRole('admin')) {
+        if (!$employee) {
+            return response()->json([
+                'user' => $user,
+                'menus' => [],
+                'roles' => [],
+                'permissions' => [],
+            ]);
+        }
+
+        // ✅ ADMIN / SUPER ADMIN MENUS
+        if ($employee->hasRole('super_admin') || $employee->hasRole('admin')) {
             $menus = [
                 ['title' => 'Wallet', 'route' => '/wallet/my', 'icon' => 'HomeOutlined'],
                 ['title' => 'Departments', 'route' => '/departments', 'icon' => 'HomeOutlined'],
@@ -93,23 +93,24 @@ class AuthController extends Controller
             ];
         }
 
-        if ($user->hasRole('staff')) {
+        // ✅ STAFF MENUS
+        if ($employee->hasRole('staff')) {
             $menus = [
                 ['title' => 'Wallet', 'route' => '/wallet/my', 'icon' => 'HomeOutlined'],
                 ['title' => 'My Tasks', 'route' => '/tasks', 'icon' => 'CheckCircleOutlined'],
                 ['title' => 'Leaves', 'route' => '/leaves/my', 'icon' => 'UserOutlined'],
                 ['title' => 'Payroll', 'route' => '/payroll/my', 'icon' => 'UserOutlined'],
-
             ];
         }
 
         return response()->json([
             'user' => $user,
             'menus' => $menus,
-            'roles' => $user->roles()->pluck('name'),
-            'permissions' => $user->getAllPermissions()->pluck('name'),
+            'roles' => $employee->getRoleNames(),
+            'permissions' => $employee->getAllPermissions()->pluck('name'),
         ]);
     }
+
 
 
 }

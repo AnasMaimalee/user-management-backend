@@ -42,7 +42,7 @@ class EmployeeController extends Controller
         ]);
 
         $employee = Employee::create($data);
-
+        $employee->assignRole('staff');
         if ($employee->email) {
             $plainPassword = Str::random(12);
 
