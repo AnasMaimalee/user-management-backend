@@ -35,6 +35,10 @@ class EmployeeController extends Controller
             'rank_id'      => 'nullable|exists:ranks,id',
             'branch_id'    => 'nullable|exists:branches,id',
             'role'         => 'required|string|max:255',
+            'basic_salary' => 'nullable|numeric|min:0', // ← Add these
+            'allowances' => 'nullable|numeric|min:0',
+            'deductions' => 'nullable|numeric|min:0',
+            'monthly_savings' => 'nullable|numeric|min:0',
         ]);
 
         $employee = Employee::create($data);

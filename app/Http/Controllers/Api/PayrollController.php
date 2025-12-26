@@ -5,15 +5,19 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Payroll;
 use App\Models\Employee;
+use App\Models\Wallet;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PayslipMail;
+use Illuminate\Support\Str;
 
 class PayrollController extends Controller
 {
-    // Admin: Get all payrolls for a month/year
+    /**
+     * Admin: Get all payrolls for a specific month/year
+     */
     public function index(Request $request)
     {
         $request->validate([
@@ -21,13 +25,18 @@ class PayrollController extends Controller
             'month' => 'required|integer|min:1|max:12',
         ]);
 
-        return Payroll::with('employee')
+        $payrolls = Payroll::with('employee')
             ->where('year', $request->year)
             ->where('month', $request->month)
+            ->orderBy('created_at', 'desc')
             ->get();
+
+        return response()->json($payrolls);
     }
 
-    // Admin: Run payroll for a month
+    /**
+     * Admin: Run payroll for a month/year
+     */
     public function run(Request $request)
     {
         $request->validate([
@@ -35,63 +44,114 @@ class PayrollController extends Controller
             'month' => 'required|integer|min:1|max:12',
         ]);
 
-        $employees = Employee::all();
+        $year = $request->year;
+        $month = $request->month;
 
+        // Prevent duplicate payroll run
+        $existing = Payroll::where('year', $year)->where('month', $month)->exists();
+        if ($existing) {
+            return response()->json([
+                'message' => "Payroll for {$month}/{$year} has already been processed."
+            ], 422);
+        }
+
+        $employees = Employee::where('status', 'active')->get();
         $payrolls = [];
+
         foreach ($employees as $employee) {
-            $basic = $employee->basic_salary ?? 0; // Assume added to Employee model
+            $basic = $employee->basic_salary ?? 0;
             $allowances = $employee->allowances ?? 0;
             $deductions = $employee->deductions ?? 0;
-            $savings = $employee->savings_deduction ?? 0; // For wallet
+            $savings = $employee->monthly_savings ?? 0; // For wallet
+
             $net = $basic + $allowances - $deductions - $savings;
 
             $payroll = Payroll::create([
-                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'id' => (string) Str::uuid(),
                 'employee_id' => $employee->id,
                 'basic_salary' => $basic,
                 'allowances' => $allowances,
                 'deductions' => $deductions,
                 'savings_deduction' => $savings,
-                'net_salary' => $net,
-                'year' => $request->year,
-                'month' => $request->month,
+                'net_salary' => max(0, $net), // Prevent negative
+                'year' => $year,
+                'month' => $month,
                 'status' => 'processed',
             ]);
 
-            // Generate payslip PDF
-            $pdf = Pdf::loadView('emails.payslip-email', ['payroll' => $payroll]);
+            // Generate PDF payslip using correct template
+            $pdf = Pdf::loadView('emails.payslip', ['payroll' => $payroll]);
+            $filename = "payslip-{$employee->employee_code}-{$month}-{$year}.pdf";
             $path = 'payslips/' . $payroll->id . '.pdf';
+
             Storage::disk('public')->put($path, $pdf->output());
             $payroll->payslip_path = $path;
             $payroll->save();
 
-            // Send email with payslip
+            // Send email with attached payslip
             Mail::to($employee->email)->send(new PayslipMail($payroll));
+
+            // Add savings to wallet if applicable
+            if ($savings > 0) {
+                $wallet = $employee->wallet ?? Wallet::create([
+                    'id' => (string) Str::uuid(),
+                    'employee_id' => $employee->id,
+                    'balance' => 0,
+                    'monthly_savings' => $savings,
+                ]);
+
+                $wallet->balance += $savings;
+                $wallet->save();
+
+                // Create transaction record
+                $wallet->transactions()->create([
+                    'id' => (string) Str::uuid(),
+                    'amount' => $savings,
+                    'type' => 'deposit',
+                    'description' => "Monthly savings from payroll {$month}/{$year}",
+                ]);
+            }
 
             $payrolls[] = $payroll;
         }
 
         return response()->json([
-            'message' => 'Payroll run successfully for ' . count($payrolls) . ' employees',
-            'payrolls' => $payrolls,
+            'message' => "Payroll successfully processed for {$year}-{$month}. " . count($payrolls) . ' payslips generated and emailed.',
+            'count' => count($payrolls),
         ], 201);
     }
 
-    // Employee: Get my payslips
+    /**
+     * Employee: Get my payslips
+     */
     public function myPayslips()
     {
-        return Payroll::where('employee_id', auth()->user()->employee_id)
-            ->latest()
+        $payslips = Payroll::where('employee_id', auth()->user()->employee_id)
+            ->orderByDesc('year')
+            ->orderByDesc('month')
             ->get();
+
+        return response()->json($payslips);
     }
 
-    // Download payslip
+    /**
+     * Download payslip PDF
+     */
     public function downloadPayslip(Payroll $payroll)
     {
-        if ($payroll->employee_id !== auth()->user()->employee_id && !auth()->user()->can('view payroll')) {
-            abort(403);
+        // Security check
+        if ($payroll->employee_id !== auth()->user()->employee_id &&
+            !auth()->user()->hasRole('admin|hr')) {
+            abort(403, 'Unauthorized');
         }
 
-        return Storage::disk('public')->download($payroll->payslip_path, 'payslip-' . $payroll->month . '-' . $payroll->year . '.pdf');
+        if (!$payroll->payslip_path || !Storage::disk('public')->exists($payroll->payslip_path)) {
+            abort(404, 'Payslip not found');
+        }
+
+        $monthName = \Carbon\Carbon::createFromDate($payroll->year, $payroll->month, 1)->format('F');
+        $filename = "Payslip-{$payroll->employee->employee_code}-{$monthName}-{$payroll->year}.pdf";
+
+        return Storage::disk('public')->download($payroll->payslip_path, $filename);
     }
 }

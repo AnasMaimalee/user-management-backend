@@ -57,6 +57,17 @@ class Employee extends Model
         'rank_id',
         'branch_id',
         'status',
+        'basic_salary',
+        'allowances',
+        'deductions',
+        'monthly_savings',
+    ];
+
+    protected $casts = [
+        'basic_salary' => 'decimal:2',
+        'allowances' => 'decimal:2',
+        'deductions' => 'decimal:2',
+        'monthly_savings' => 'decimal:2',
     ];
 
     public function department()
