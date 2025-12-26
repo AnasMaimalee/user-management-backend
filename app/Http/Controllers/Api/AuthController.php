@@ -62,55 +62,45 @@ class AuthController extends Controller
             'message' => 'Logged out successfully'
         ]);
     }
+    
     public function me(Request $request)
     {
-        $user = $request->user()->load('employee.roles');
+    $user = $request->user()->load('employee');
 
-        $employee = $user->employee;
+    $roles = $user->getRoleNames();
+    $permissions = $user->getAllPermissions()->pluck('name');
 
-        $menus = [];
+    $menus = [];
 
-        if (!$employee) {
-            return response()->json([
-                'user' => $user,
-                'menus' => [],
-                'roles' => [],
-                'permissions' => [],
-            ]);
-        }
-
-        // ✅ ADMIN / SUPER ADMIN MENUS
-        if ($employee->hasRole('super_admin') || $employee->hasRole('admin')) {
-            $menus = [
-                ['title' => 'Wallet', 'route' => '/wallet/my', 'icon' => 'HomeOutlined'],
-                ['title' => 'Departments', 'route' => '/departments', 'icon' => 'HomeOutlined'],
-                ['title' => 'Employees', 'route' => '/employees', 'icon' => 'UserOutlined'],
-                ['title' => 'Branches', 'route' => '/branches', 'icon' => 'MapPinOutlined'],
-                ['title' => 'Ranks', 'route' => '/ranks', 'icon' => 'AcademicCapOutlined'],
-                ['title' => 'Leaves', 'route' => '/leaves', 'icon' => 'UserOutlined'],
-                ['title' => 'Payroll', 'route' => '/payroll', 'icon' => 'UserOutlined'],
-                ['title' => 'Settings', 'route' => '/setting/profile', 'icon' => 'SettingOutlined'],
-            ];
-        }
-
-        // ✅ STAFF MENUS
-        if ($employee->hasRole('staff')) {
-            $menus = [
-                ['title' => 'Wallet', 'route' => '/wallet/my', 'icon' => 'HomeOutlined'],
-                ['title' => 'My Tasks', 'route' => '/tasks', 'icon' => 'CheckCircleOutlined'],
-                ['title' => 'Leaves', 'route' => '/leaves/my', 'icon' => 'UserOutlined'],
-                ['title' => 'Payroll', 'route' => '/payroll/my', 'icon' => 'UserOutlined'],
-            ];
-        }
-
-        return response()->json([
-            'user' => $user,
-            'menus' => $menus,
-            'roles' => $employee->getRoleNames(),
-            'permissions' => $employee->getAllPermissions()->pluck('name'),
-        ]);
+    if ($user->hasRole(['super_admin', 'admin'])) {
+        $menus = [
+            ['title' => 'Wallet', 'route' => '/wallet/my'],
+            ['title' => 'Departments', 'route' => '/departments'],
+            ['title' => 'Employees', 'route' => '/employees'],
+            ['title' => 'Branches', 'route' => '/branches'],
+            ['title' => 'Ranks', 'route' => '/ranks'],
+            ['title' => 'Leaves', 'route' => '/leaves'],
+            ['title' => 'Payroll', 'route' => '/payroll'],
+            ['title' => 'Settings', 'route' => '/setting/profile'],
+        ];
     }
 
+    if ($user->hasRole('staff')) {
+        $menus = [
+            ['title' => 'Wallet', 'route' => '/wallet/my'],
+            ['title' => 'Leaves', 'route' => '/leaves/my'],
+            ['title' => 'Payroll', 'route' => '/payroll/my'],
+            ['title' => 'Profile', 'route' => '/setting/profile'],
+        ];
+    }
 
+    return response()->json([
+        'user' => $user,
+        'employee' => $user->employee,
+        'menus' => $menus,
+        'roles' => $roles,
+        'permissions' => $permissions,
+    ]);
+}
 
 }
