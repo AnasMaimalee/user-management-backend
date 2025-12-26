@@ -7,9 +7,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Sanctum\HasApiTokens;
+use App\Notifications\EmployeeResetPasswordNotification;
 use Illuminate\Support\Str;
 class Employee extends Model
+
 {
+
+
+
     use HasApiTokens, HasFactory, Notifiable;
 
     public $incrementing = false;
@@ -70,6 +75,11 @@ class Employee extends Model
     public function user()
     {
         return $this->hasOne(User::class, 'employee_id');
+    }
+
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new EmployeeResetPasswordNotification($token));
     }
 
 }

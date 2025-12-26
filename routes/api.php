@@ -15,7 +15,7 @@ use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\LeaveRequestController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\EmployeeInvitationController;
-
+use App\Http\Controllers\Api\Auth\PasswordResetController;
 /*
 |--------------------------------------------------------------------------
 | Public Auth Routes
@@ -141,3 +141,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::post('/profile', [ProfileController::class, 'update']);
 });
+
+// routes/api.php
+// routes/api.php
+Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink']);
+Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->name('password.reset');
