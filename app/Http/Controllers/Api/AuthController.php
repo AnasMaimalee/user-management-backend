@@ -64,11 +64,22 @@ class AuthController extends Controller
     }
     public function me(Request $request)
     {
-        $user = $request->user();
+        $user = $request->user()->load('employee');
+
+        $profileImageUrl = null;
+
+        if ($user->employee && $user->employee->profile_image) {
+            $profileImageUrl = asset('storage/' . $user->employee->profile_image);
+        }
+
+
+        // Attach full image URL (IMPORTANT)
+        $user->profile_image_url = $user->profile_image
+            ? asset('storage/' . $user->profile_image)
+            : null;
 
         $menus = [];
 
-        // Super Admin or Admin
         if ($user->hasRole('super_admin') || $user->hasRole('admin')) {
             $menus = [
                 ['title' => 'Departments', 'route' => '/departments', 'icon' => 'HomeOutlined'],
@@ -76,9 +87,10 @@ class AuthController extends Controller
                 ['title' => 'Branches', 'route' => '/branches', 'icon' => 'MapPinOutlined'],
                 ['title' => 'Ranks', 'route' => '/ranks', 'icon' => 'AcademicCapOutlined'],
                 ['title' => 'Leaves', 'route' => '/leaves', 'icon' => 'UserOutlined'],
-                ['title' => 'Settings', 'route' => '/settings', 'icon' => 'SettingOutlined'],
+                ['title' => 'Settings', 'route' => '/setting/profile', 'icon' => 'SettingOutlined'],
             ];
         }
+
         if ($user->hasRole('staff')) {
             $menus = [
                 ['title' => 'My Tasks', 'route' => '/tasks', 'icon' => 'CheckCircleOutlined'],

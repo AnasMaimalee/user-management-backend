@@ -12,66 +12,52 @@ class ProfileController extends Controller
 {
     public function show(Request $request)
     {
-        return response()->json($request->user());
+        return response()->json($request->user()->load('employee'));
     }
-
     public function update(Request $request)
     {
         $user = $request->user();
+        $employee = $user->employee;
+
+        if (!$employee) {
+            return response()->json([
+                'message' => 'Employee profile not found'
+            ], 422);
+        }
 
         $validated = $request->validate([
             'profile_image' => 'nullable|image|max:2048',
-            'current_password' => 'nullable',
+            'current_password' => 'nullable|required_with:password',
             'password' => ['nullable', 'confirmed', Password::min(8)],
         ]);
 
-// Update password
+        /* PASSWORD */
         if (!empty($validated['password'])) {
             if (!Hash::check($validated['current_password'], $user->password)) {
-                return response()->json([
-                    'message' => 'Current password is incorrect'
-                ], 422);
+                return response()->json(['message' => 'Current password is incorrect'], 422);
             }
 
-            $user->password = Hash::make($validated['password']);
+            $user->update([
+                'password' => Hash::make($validated['password'])
+            ]);
         }
 
-// Upload image
+        /* PROFILE IMAGE */
         if ($request->hasFile('profile_image')) {
-            if ($user->profile_image) {
-                Storage::delete($user->profile_image);
+
+            if ($employee->profile_image) {
+                Storage::disk('public')->delete($employee->profile_image);
             }
 
-            $path = $request->file('profile_image')->store('profiles', 'public');
-            $user->profile_image = $path;
-        }
+            $employee->profile_image = $request->file('profile_image')
+                ->store('profiles', 'public');
 
-        $user->save();
+            $employee->save();
+        }
 
         return response()->json([
             'message' => 'Profile updated successfully',
-            'user' => $user
-        ]);
-    }
-
-    public function updateImage(Request $request)
-    {
-        $request->validate([
-            'profile_image' => 'required|image|max:2048'
-        ]);
-
-        $user = $request->user();
-
-        if ($user->profile_image) {
-            Storage::disk('public')->delete($user->profile_image);
-        }
-
-        $path = $request->file('profile_image')->store('profiles', 'public');
-        $user->profile_image = $path;
-        $user->save();
-
-        return response()->json([
-            'image' => $path
+            'user' => $user->load('employee')
         ]);
     }
 
