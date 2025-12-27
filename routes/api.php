@@ -178,13 +178,17 @@ Route::middleware('auth:sanctum')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    // Employee
-    Route::get('/wallet/my',        [WalletController::class, 'myWallet']);
-    Route::post('/wallet/withdraw', [WalletController::class, 'requestWithdrawal']);
+});
 
-    // Admin / HR
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/wallet/my', [WalletController::class, 'myWallet']);
+    Route::post('/wallet/withdraw', [WalletController::class, 'requestWithdrawal']);
+    Route::post('/wallet/goal', [WalletController::class, 'setGoal']); // ← ADD THIS LINE
+
+    // Admin routes
     Route::middleware('role:admin|hr')->group(function () {
         Route::get('/wallet/pending-withdrawals', [WalletController::class, 'pendingWithdrawals']);
         Route::post('/wallet/process/{transaction}', [WalletController::class, 'processWithdrawal']);
+        Route::post('/wallet/deposit/{employeeId}', [WalletController::class, 'manualDeposit']);
     });
 });

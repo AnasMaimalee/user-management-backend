@@ -12,9 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('wallets', function (Blueprint $table) {
-            $table->string('goal_name')->nullable();
-            $table->decimal('goal_amount', 15, 2)->default(0);
-            $table->date('goal_target_date')->nullable();
+            //
         });
     }
 

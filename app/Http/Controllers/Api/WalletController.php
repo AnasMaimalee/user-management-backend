@@ -7,18 +7,35 @@ use App\Models\Wallet;
 use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use App\Mail\WalletWithdrawalNotification;
+use Illuminate\Support\Facades\Mail;
 
 class WalletController extends Controller
 {
     // Employee: View my wallet
     public function myWallet()
     {
-        $wallet = auth()->user()->employee->wallet()->with('transactions')->firstOrCreate([
-            'employee_id' => auth()->user()->employee_id,
+        $user = auth()->user();
+
+        // If user has no employee record (e.g., pure admin), return empty wallet
+        if (!$user->employee) {
+            return response()->json([
+                'balance' => 0,
+                'monthly_savings' => 0,
+                'goal_name' => null,
+                'goal_amount' => 0,
+                'goal_target_date' => null,
+                'transactions' => [],
+            ]);
+        }
+
+        $wallet = $user->employee->wallet()->with('transactions')->firstOrCreate([
+            'employee_id' => $user->employee_id,
         ], [
             'id' => (string) Str::uuid(),
             'balance' => 0,
-            'monthly_savings' => auth()->user()->employee->monthly_savings ?? 0,
+            'monthly_savings' => $user->employee->monthly_savings ?? 0,
         ]);
 
         return response()->json($wallet->load('transactions'));
@@ -32,22 +49,27 @@ class WalletController extends Controller
             'reason' => 'required|string|min:10|max:500',
         ]);
 
-        $wallet = auth()->user()->employee->wallet;
+        $employee = auth()->user()->employee;
+        $wallet = $employee->wallet;
 
-        if (!$wallet || $wallet->balance < $request->amount) {
+        if (!$wallet) {
+            return response()->json(['message' => 'Wallet not found'], 404);
+        }
+
+        if ($wallet->balance < $request->amount) {
             return response()->json(['message' => 'Insufficient balance'], 422);
         }
 
         $transaction = $wallet->addTransaction(
             amount: $request->amount,
             type: 'withdrawal',
-            description: $request->reason,
+            description: "Withdrawal request: " . $request->reason,
             status: 'pending'
         );
 
         return response()->json([
-            'message' => 'Withdrawal request submitted. Awaiting approval.',
-            'transaction' => $transaction,
+            'message' => 'Withdrawal request submitted successfully. Awaiting HR approval.',
+            'transaction' => $transaction->load('wallet.employee'),
         ], 201);
     }
 
@@ -58,7 +80,7 @@ class WalletController extends Controller
             ->where('type', 'withdrawal')
             ->where('status', 'pending')
             ->latest()
-            ->get();
+            ->paginate(20); // Better for large systems
 
         return response()->json($transactions);
     }
@@ -67,35 +89,40 @@ class WalletController extends Controller
     public function processWithdrawal(Request $request, WalletTransaction $transaction)
     {
         $request->validate([
-            'action' => 'required|in:approve,reject',
+            'action' => ['required', Rule::in(['approve', 'reject'])],
             'note' => 'nullable|string|max:500',
         ]);
 
         if ($transaction->status !== 'pending' || $transaction->type !== 'withdrawal') {
-            return response()->json(['message' => 'Invalid transaction'], 422);
+            return response()->json(['message' => 'This transaction cannot be processed'], 422);
         }
 
-        if ($request->action === 'approve') {
+        $action = $request->action;
+        $note = $request->note ? "\nAdmin Note: " . trim($request->note) : '';
+
+        if ($action === 'approve') {
+            if ($transaction->wallet->balance < $transaction->amount) {
+                return response()->json(['message' => 'Insufficient balance to approve'], 422);
+            }
+
             $transaction->status = 'approved';
-            $transaction->processed_by = auth()->id();
-            $transaction->processed_at = now();
-            $transaction->wallet->balance -= $transaction->amount;
-            $transaction->wallet->save();
+            $transaction->wallet->decrement('balance', $transaction->amount);
         } else {
             $transaction->status = 'rejected';
-            $transaction->processed_by = auth()->id();
-            $transaction->processed_at = now();
         }
 
-        $transaction->description .= "\nAdmin Note: " . ($request->note ?? 'No note');
+        $transaction->processed_by = auth()->id();
+        $transaction->processed_at = now();
+        $transaction->description .= $note;
         $transaction->save();
-
+        Mail::to($transaction->wallet->employee->email)->send(
+            new WalletWithdrawalNotification($transaction, $request->note)
+        );
         return response()->json([
-            'message' => "Withdrawal request {$request->action}d",
-            'transaction' => $transaction,
+            'message' => "Withdrawal request has been {$action}d",
+            'transaction' => $transaction->fresh()->load('wallet.employee'),
         ]);
     }
-
 
     // Employee: Set savings goal
     public function setGoal(Request $request)
@@ -108,13 +135,20 @@ class WalletController extends Controller
 
         $wallet = auth()->user()->employee->wallet;
 
+        if (!$wallet) {
+            return response()->json(['message' => 'Wallet not found'], 404);
+        }
+
         $wallet->update([
             'goal_name' => $request->goal_name,
             'goal_amount' => $request->goal_amount,
             'goal_target_date' => $request->goal_target_date,
         ]);
 
-        return response()->json(['message' => 'Savings goal set successfully!', 'wallet' => $wallet]);
+        return response()->json([
+            'message' => 'Savings goal updated successfully!',
+            'wallet' => $wallet,
+        ]);
     }
 
     // Admin: Manual deposit (e.g., bonus)
@@ -130,10 +164,13 @@ class WalletController extends Controller
         $wallet->addTransaction(
             amount: $request->amount,
             type: 'deposit',
-            description: $request->description,
+            description: "Manual deposit: " . $request->description,
             status: 'approved'
         );
 
-        return response()->json(['message' => 'Deposit added successfully']);
+        return response()->json([
+            'message' => 'Deposit added successfully',
+            'wallet' => $wallet->fresh(),
+        ]);
     }
 }

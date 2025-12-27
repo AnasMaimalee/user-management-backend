@@ -62,7 +62,7 @@ class AuthController extends Controller
             'message' => 'Logged out successfully'
         ]);
     }
-    
+
     public function me(Request $request)
     {
     $user = $request->user()->load('employee');
@@ -74,7 +74,7 @@ class AuthController extends Controller
 
     if ($user->hasRole(['super_admin', 'admin'])) {
         $menus = [
-            ['title' => 'Wallet', 'route' => '/wallet/my'],
+            ['title' => 'Wallet', 'route' => '/admin/withdrawals'],
             ['title' => 'Departments', 'route' => '/departments'],
             ['title' => 'Employees', 'route' => '/employees'],
             ['title' => 'Branches', 'route' => '/branches'],
