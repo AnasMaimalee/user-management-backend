@@ -2,11 +2,14 @@
 
 return [
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie', 'login', 'logout', 'register'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://127.0.0.1:3001', 'http://localhost:3001'],
+    'allowed_origins' => [
+        'http://172.24.24.69:3001',
+        'http://localhost:3001'
+    ],
 
     'allowed_origins_patterns' => [],
 
@@ -16,6 +19,5 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => false, // Bearer token, no cookies
-
+    'supports_credentials' => false, // TOKEN auth
 ];
