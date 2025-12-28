@@ -1,18 +1,19 @@
 <?php
 
+
 namespace App\Mail;
 
-use App\Models\Loan;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
+use App\Models\Loan;
 
 class LoanStatusMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $loan;
-    public $statusMessage;
+    public Loan $loan;
+    public string $statusMessage;
 
     public function __construct(Loan $loan, string $statusMessage)
     {
@@ -22,11 +23,7 @@ class LoanStatusMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Your Loan Request Status')
-            ->view('emails.loan_status') // Create this blade
-            ->with([
-                'loan' => $this->loan,
-                'statusMessage' => $this->statusMessage,
-            ]);
+        return $this->subject("Loan Request Status: {$this->statusMessage}")
+            ->view('emails.loan_status');
     }
 }

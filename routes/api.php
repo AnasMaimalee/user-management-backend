@@ -191,11 +191,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/goal', [WalletController::class, 'setGoal']);                   // Set savings goal
 
         // Admin & HR routes
-        Route::middleware('role:admin|hr')->group(function () {
+
             Route::get('/pending-withdrawals', [WalletController::class, 'pendingWithdrawals']);
             Route::post('/process/{transaction}', [WalletController::class, 'processWithdrawal']);
             Route::post('/deposit/{employeeId}', [WalletController::class, 'manualDeposit']);
-        });
+
     });
 
     // ================= LOAN ROUTES =================

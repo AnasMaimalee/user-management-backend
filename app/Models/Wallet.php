@@ -45,7 +45,7 @@ class Wallet extends Model
         $transaction = $this->transactions()->create([
             'id' => (string) Str::uuid(),
             'amount' => $amount,
-            'type' => $type,
+            'type' => $type, // ⚠️ Must match enum: deposit, withdrawal, adjustment
             'description' => $description,
             'status' => $status,
             'processed_by' => $processedBy,
@@ -63,4 +63,5 @@ class Wallet extends Model
 
         return $transaction;
     }
+
 }

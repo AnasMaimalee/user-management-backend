@@ -10,7 +10,7 @@ use Illuminate\Support\ServiceProvider;
 class AppServiceProvider extends ServiceProvider
 {
     /**
-     * Register any application services.
+     * Register any application Services.
      */
     public function register(): void
     {
@@ -22,7 +22,7 @@ class AppServiceProvider extends ServiceProvider
         Employee::class => EmployeePolicy::class,
     ];
     /**
-     * Bootstrap any application services.
+     * Bootstrap any application Services.
      */
     public function boot(): void
     {
