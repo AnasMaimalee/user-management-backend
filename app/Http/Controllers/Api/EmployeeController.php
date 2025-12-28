@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Mail\EmployeeWelcomeMail;
 use Illuminate\Validation\Rule;
-
+use App\Models\Wallet;
 class EmployeeController extends Controller
 {
     public function index(Request $request)
@@ -25,28 +25,35 @@ class EmployeeController extends Controller
 
     public function store(Request $request)
     {
+        // Check permission
         abort_unless($request->user()->can('create employees'), 403);
 
+        // Validate form data
         $data = $request->validate([
-            'first_name'   => 'required|string|max:255',
-            'last_name'    => 'required|string|max:255',
-            'email'        => 'required|email|unique:employees,email|unique:users,email',
-            'department_id'=> 'nullable|exists:departments,id',
-            'rank_id'      => 'nullable|exists:ranks,id',
-            'branch_id'    => 'nullable|exists:branches,id',
-            'role'         => 'required|string|max:255',
-            'basic_salary' => 'nullable|numeric|min:0', // ← Add these
-            'allowances' => 'nullable|numeric|min:0',
-            'deductions' => 'nullable|numeric|min:0',
+            'first_name'    => 'required|string|max:255',
+            'last_name'     => 'required|string|max:255',
+            'email'         => 'required|email|unique:employees,email|unique:users,email',
+            'department_id' => 'nullable|exists:departments,id',
+            'rank_id'       => 'nullable|exists:ranks,id',
+            'branch_id'     => 'nullable|exists:branches,id',
+            'role'          => 'required|string|max:255',
+            'basic_salary'  => 'nullable|numeric|min:0',
+            'allowances'    => 'nullable|numeric|min:0',
+            'deductions'    => 'nullable|numeric|min:0',
             'monthly_savings' => 'nullable|numeric|min:0',
         ]);
 
+        // 1️⃣ Create Employee
         $employee = Employee::create($data);
+
+        // Assign staff role to employee
         $employee->assignRole('staff');
+
+        // 2️⃣ Create linked User and send welcome email
         if ($employee->email) {
             $plainPassword = Str::random(12);
 
-            User::create([
+            $user = User::create([
                 'id' => (string) Str::uuid(),
                 'name' => $employee->first_name . ' ' . $employee->last_name,
                 'email' => $employee->email,
@@ -54,19 +61,41 @@ class EmployeeController extends Controller
                 'role' => $employee->role,
                 'employee_id' => $employee->id,
             ]);
-            // Pass the plain password to the mailable
+
+            // Send welcome email with credentials
             Mail::to($employee->email)->send(
                 new EmployeeWelcomeMail($employee, $plainPassword)
             );
-
         }
 
+        // 3️⃣ Create Wallet for Employee
+        $monthlySavings = $data['monthly_savings'] ?? 0;
+
+        $wallet = Wallet::create([
+            'employee_id' => $employee->id,
+            'balance' => 0,              // start with 0
+            'monthly_savings' => $monthlySavings,
+        ]);
+
+        // 4️⃣ Add initial balance equal to monthly savings
+        if ($monthlySavings > 0) {
+            $wallet->addTransaction(
+                $monthlySavings,           // amount
+                'deposit',                 // type
+                'Initial monthly savings', // description
+                'approved',
+                null                       // processed_by
+            );
+        }
+
+        // 5️⃣ Return response with employee and wallet info
         return response()->json([
             'message'  => 'Employee created successfully. ' .
                 ($employee->email ? 'Login credentials sent.' : ''),
-            'employee' => $employee->load(['department', 'rank', 'branch'])
+            'employee' => $employee->load(['department', 'rank', 'branch', 'wallet'])
         ], 201);
     }
+
 
     public function show(Employee $employee, Request $request)
     {

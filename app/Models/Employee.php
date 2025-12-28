@@ -3,54 +3,25 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Model;
-use Laravel\Sanctum\HasApiTokens;
-use App\Notifications\EmployeeResetPasswordNotification;
 use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;
+use App\Notifications\EmployeeResetPasswordNotification;
 
 class Employee extends Model
-
 {
+    use HasFactory, Notifiable, HasRoles;
 
-
-
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    // IMPORTANT
+    protected $guard_name = 'web';
 
     public $incrementing = false;
     protected $keyType = 'string';
 
-    protected $guard_name = 'web';
-    protected static function booted()
-    {
-        static::creating(function ($model) {
-            if (! $model->id) {
-                $model->id = (string) Str::uuid();
-            }
-        });
-
-        static::creating(function ($employee) {
-            if (!$employee->employee_code) {
-                // Lock for concurrency safety (optional but recommended)
-                $last = Employee::where('employee_code', 'like', 'EMP-%')
-                    ->lockForUpdate()
-                    ->orderByRaw("CAST(SUBSTR(employee_code, 5) AS UNSIGNED) DESC")
-                    ->first();
-
-                $nextNumber = 1;
-                if ($last) {
-                    $lastNumber = (int) substr($last->employee_code, 4);  // after "EMP-"
-                    $nextNumber = $lastNumber + 1;
-                }
-
-                $employee->employee_code = 'EMP-' . str_pad($nextNumber, 2, '0', STR_PAD_LEFT);
-            }
-        });
-    }
-
     protected $fillable = [
+        'user_id',
         'first_name',
         'last_name',
         'email',
@@ -71,6 +42,31 @@ class Employee extends Model
         'monthly_savings' => 'decimal:2',
     ];
 
+    protected static function booted()
+    {
+        static::creating(function ($employee) {
+            if (! $employee->id) {
+                $employee->id = (string) Str::uuid();
+            }
+
+            if (! $employee->employee_code) {
+                $last = self::where('employee_code', 'like', 'EMP-%')
+                    ->orderByRaw("CAST(SUBSTR(employee_code, 5) AS UNSIGNED) DESC")
+                    ->first();
+
+                $next = $last ? ((int) substr($last->employee_code, 4) + 1) : 1;
+                $employee->employee_code = 'EMP-' . str_pad($next, 2, '0', STR_PAD_LEFT);
+            }
+        });
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+
+
     public function department()
     {
         return $this->belongsTo(Department::class);
@@ -84,11 +80,6 @@ class Employee extends Model
     public function branch()
     {
         return $this->belongsTo(Branch::class);
-    }
-
-    public function user()
-    {
-        return $this->hasOne(User::class, 'employee_id');
     }
 
     public function wallet()
@@ -106,4 +97,8 @@ class Employee extends Model
         $this->notify(new EmployeeResetPasswordNotification($token));
     }
 
+    public function loans()
+    {
+        return $this->hasMany(Loan::class);
+    }
 }

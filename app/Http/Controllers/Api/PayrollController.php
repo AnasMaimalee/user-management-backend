@@ -79,6 +79,24 @@ class PayrollController extends Controller
                 'status' => 'processed',
             ]);
 
+            // Handle active loans
+            $activeLoan = $employee->loans()->where('status', 'approved')->where('remaining_amount', '>', 0)->first();
+
+            if ($activeLoan) {
+                $deduct = min($activeLoan->monthly_deduction, $net); // Don't go negative
+                $activeLoan->deductPayment($deduct);
+                $net -= $deduct;
+
+                // Add transaction to wallet if exists
+                if ($employee->wallet) {
+                    $employee->wallet->addTransaction(
+                        $deduct,
+                        'withdrawal',
+                        "Loan repayment deduction"
+                    );
+                }
+            }
+
             // Generate PDF payslip using correct template
             $pdf = Pdf::loadView('emails.payslip', ['payroll' => $payroll]);
             $filename = "payslip-{$employee->employee_code}-{$month}-{$year}.pdf";
@@ -148,4 +166,6 @@ class PayrollController extends Controller
 
         return Storage::disk('public')->download($payroll->payslip_path, $filename);
     }
+
+
 }

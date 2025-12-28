@@ -18,9 +18,10 @@ class WalletController extends Controller
     {
         $user = auth()->user();
 
-        // If user has no employee record (e.g., pure admin), return empty wallet
+        // If user has no employee record (e.g., pure admin), return empty wallet safely
         if (!$user->employee) {
             return response()->json([
+                'id' => null,
                 'balance' => 0,
                 'monthly_savings' => 0,
                 'goal_name' => null,
@@ -30,8 +31,10 @@ class WalletController extends Controller
             ]);
         }
 
-        $wallet = $user->employee->wallet()->with('transactions')->firstOrCreate([
-            'employee_id' => $user->employee_id,
+        $wallet = $user->employee->wallet()->with(['transactions' => function ($query) {
+            $query->latest()->take(50);
+        }])->firstOrCreate([
+            'employee_id' => $user->employee->id,
         ], [
             'id' => (string) Str::uuid(),
             'balance' => 0,
@@ -49,8 +52,13 @@ class WalletController extends Controller
             'reason' => 'required|string|min:10|max:500',
         ]);
 
-        $employee = auth()->user()->employee;
-        $wallet = $employee->wallet;
+        $user = auth()->user();
+
+        if (!$user->employee) {
+            return response()->json(['message' => 'Employee record not found'], 404);
+        }
+
+        $wallet = $user->employee->wallet;
 
         if (!$wallet) {
             return response()->json(['message' => 'Wallet not found'], 404);
@@ -76,11 +84,11 @@ class WalletController extends Controller
     // Admin: Get all pending withdrawals
     public function pendingWithdrawals()
     {
-        $transactions = WalletTransaction::with(['wallet.employee'])
+        $transactions = WalletTransaction::with(['wallet.employee.user'])
             ->where('type', 'withdrawal')
             ->where('status', 'pending')
             ->latest()
-            ->paginate(20); // Better for large systems
+            ->paginate(20);
 
         return response()->json($transactions);
     }
@@ -115,9 +123,12 @@ class WalletController extends Controller
         $transaction->processed_at = now();
         $transaction->description .= $note;
         $transaction->save();
+
+        // Send email notification
         Mail::to($transaction->wallet->employee->email)->send(
             new WalletWithdrawalNotification($transaction, $request->note)
         );
+
         return response()->json([
             'message' => "Withdrawal request has been {$action}d",
             'transaction' => $transaction->fresh()->load('wallet.employee'),
@@ -133,7 +144,13 @@ class WalletController extends Controller
             'goal_target_date' => 'required|date|after:today',
         ]);
 
-        $wallet = auth()->user()->employee->wallet;
+        $user = auth()->user();
+
+        if (!$user->employee) {
+            return response()->json(['message' => 'Employee record not found'], 404);
+        }
+
+        $wallet = $user->employee->wallet;
 
         if (!$wallet) {
             return response()->json(['message' => 'Wallet not found'], 404);

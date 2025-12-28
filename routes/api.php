@@ -1,5 +1,18 @@
 <?php
 
+use App\Http\Controllers\Api\Auth\AuthController;
+use App\Http\Controllers\Api\Auth\PasswordResetController;
+use App\Http\Controllers\Api\BranchController;
+use App\Http\Controllers\Api\DepartmentController;
+use App\Http\Controllers\Api\EmployeeController;
+use App\Http\Controllers\Api\LeaveRequestController;
+use App\Http\Controllers\Api\LoanController;
+use App\Http\Controllers\Api\PayrollController;
+use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\RankController;
+use App\Http\Controllers\Api\WalletController;
+use App\Http\Controllers\EmployeeInvitationController;
+use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -8,24 +21,12 @@ use Illuminate\Support\Facades\Route;
 | Models
 |--------------------------------------------------------------------------
 */
-use App\Models\Employee;
 
 /*
 |--------------------------------------------------------------------------
 | Controllers
 |--------------------------------------------------------------------------
 */
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\DepartmentController;
-use App\Http\Controllers\Api\EmployeeController;
-use App\Http\Controllers\Api\RankController;
-use App\Http\Controllers\Api\BranchController;
-use App\Http\Controllers\Api\LeaveRequestController;
-use App\Http\Controllers\Api\ProfileController;
-use App\Http\Controllers\EmployeeInvitationController;
-use App\Http\Controllers\Api\Auth\PasswordResetController;
-use App\Http\Controllers\Api\PayrollController;
-use App\Http\Controllers\Api\WalletController;
 
 /*
 |--------------------------------------------------------------------------
@@ -181,14 +182,31 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/wallet/my', [WalletController::class, 'myWallet']);
-    Route::post('/wallet/withdraw', [WalletController::class, 'requestWithdrawal']);
-    Route::post('/wallet/goal', [WalletController::class, 'setGoal']); // ← ADD THIS LINE
 
-    // Admin routes
-    Route::middleware('role:admin|hr')->group(function () {
-        Route::get('/wallet/pending-withdrawals', [WalletController::class, 'pendingWithdrawals']);
-        Route::post('/wallet/process/{transaction}', [WalletController::class, 'processWithdrawal']);
-        Route::post('/wallet/deposit/{employeeId}', [WalletController::class, 'manualDeposit']);
+    // ================= WALLET ROUTES =================
+    // Employee routes
+    Route::prefix('wallet')->group(function () {
+        Route::get('/my', [WalletController::class, 'myWallet']);                     // View own wallet
+        Route::post('/withdraw', [WalletController::class, 'requestWithdrawal']);     // Request withdrawal
+        Route::post('/goal', [WalletController::class, 'setGoal']);                   // Set savings goal
+
+        // Admin & HR routes
+        Route::middleware('role:admin|hr')->group(function () {
+            Route::get('/pending-withdrawals', [WalletController::class, 'pendingWithdrawals']);
+            Route::post('/process/{transaction}', [WalletController::class, 'processWithdrawal']);
+            Route::post('/deposit/{employeeId}', [WalletController::class, 'manualDeposit']);
+        });
     });
+
+    // ================= LOAN ROUTES =================
+    // Employee routes
+    Route::prefix('loans')->group(function () {
+        Route::get('/my', [LoanController::class, 'myLoans']);            // View own loans
+        Route::post('/request', [LoanController::class, 'requestLoan']);  // Request a loan
+
+        // Admin routes
+            Route::get('/pending', [LoanController::class, 'pendingLoans']);            // List pending loans
+            Route::post('/process/{loan}', [LoanController::class, 'processLoan']);     // Approve or reject loan
+    });
+
 });
