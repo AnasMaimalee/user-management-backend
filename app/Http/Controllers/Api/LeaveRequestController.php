@@ -16,13 +16,12 @@ class LeaveRequestController extends Controller
     {
         abort_unless($request->user()->can('view leaves'), 403);
 
-        return LeaveRequest::with([
-            'employee.department',
-            'employee.rank',
-            'employee.branch',
-        ])
+        $leaveRequests = LeaveRequest::with('employee')
+            ->whereHas('employee')
             ->latest()
             ->get();
+
+        return response()->json($leaveRequests);
     }
 
     public function myLeaves()

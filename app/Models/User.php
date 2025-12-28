@@ -53,4 +53,19 @@ class User extends Authenticatable
         return $this->hasOne(Employee::class, 'id', 'employee_id');
     }
 
+    public function department()
+    {
+        return $this->employee?->department();
+    }
+
+    public function branch()
+    {
+        return $this->employee?->branch();
+    }
+
+    public function rank()
+    {
+        return $this->employee?->rank();
+    }
+
 }

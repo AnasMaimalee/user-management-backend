@@ -75,6 +75,7 @@ class AuthController extends Controller
         if(in_array('staff', $userRoles)) {
             $menus[] = ['title' => 'My Wallet', 'route' => '/wallet/my', 'icon' => 'WalletOutlined'];
             $menus[] = ['title' => 'Loans', 'route' => '/loans/my', 'icon' => 'DollarOutlined'];
+            $menus[] = ['title' => 'Leaves', 'route' => '/leaves/my', 'icon' => 'DollarOutlined'];
 
             $menus[] = ['title' => 'Job Ranks', 'route' => '/ranks', 'icon' => 'ProfileOutlined'];
             $menus[] = ['title' => 'Branches', 'route' => '/branches', 'icon' => 'BankOutlined'];
@@ -94,6 +95,8 @@ class AuthController extends Controller
             $menus[] = ['title' => 'Payroll', 'route' => '/payroll', 'icon' => 'DollarOutlined'];
             $menus[] = ['title' => 'Loan Requests', 'route' => '/admin/loans', 'icon' => 'MoneyCollectOutlined'];
             $menus[] = ['title' => 'Withdrawal Requests', 'route' => '/admin/withdrawals', 'icon' => 'WalletOutlined'];
+            $menus[] = ['title' => 'Leave Request', 'route' => '/admin/leave-request', 'icon' => 'FieldTimeOutlined'];
+
         }
 
         $menus[] = ['title' => 'Profile', 'route' => '/setting/profile', 'icon' => 'UserOutlined'];
