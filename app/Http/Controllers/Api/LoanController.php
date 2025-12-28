@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\LoanStatusMail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
-
+use App\Models\Wallet;
 class LoanController extends Controller
 {
     public function __construct(
@@ -123,9 +123,11 @@ class LoanController extends Controller
         ]);
     }
 
-    // Example usage in your repayment logic
     public function repayLoan(Loan $loan)
     {
+        $companyWallet = Wallet::where('is_company', true)->first();
+
+        // Debit employee wallet
         $this->paymentService->debit(
             $loan->employee->wallet,
             $loan->monthly_deduction,
@@ -133,12 +135,23 @@ class LoanController extends Controller
             $loan->id
         );
 
+        // Credit company wallet
+        $this->paymentService->credit(
+            $companyWallet,
+            $loan->monthly_deduction,
+            'Loan repayment from ' . $loan->employee->first_name,
+            $loan->id
+        );
+
+        // Update loan remaining
         $loan->remaining_amount -= $loan->monthly_deduction;
         if ($loan->remaining_amount <= 0) {
             $loan->status = 'completed';
             $loan->remaining_amount = 0;
         }
+
         $loan->save();
     }
+
 
 }

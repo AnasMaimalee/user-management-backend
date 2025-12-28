@@ -10,10 +10,12 @@ class Kernel extends ConsoleKernel
     /**
      * Define the application's command schedule.
      */
-    protected function schedule(Schedule $schedule): void
+    protected function schedule(\Illuminate\Console\Scheduling\Schedule $schedule)
     {
-        $schedule->command('loans:repay')->monthly();
+        // Run on the 1st day of every month at midnight
+        $schedule->command('loans:repay')->monthlyOn(1, '00:00');
     }
+
 
     /**
      * Register the commands for the application.
