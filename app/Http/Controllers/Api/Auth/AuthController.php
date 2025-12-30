@@ -99,6 +99,7 @@ class AuthController extends Controller
 
         }
 
+        $menus[] = ['title' => 'Company Chat', 'route' => '/chat', 'icon' => 'MessageOutlined'];
         $menus[] = ['title' => 'Profile', 'route' => '/setting/profile', 'icon' => 'UserOutlined'];
 
 

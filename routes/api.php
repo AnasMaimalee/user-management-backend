@@ -12,6 +12,10 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\RankController;
 use App\Http\Controllers\Api\WalletController;
 use App\Http\Controllers\EmployeeInvitationController;
+use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\Api\ChatSeenController;
+use App\Http\Controllers\Api\ChatTypingController;
+
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -210,3 +214,15 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
 });
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/chat/messages', [ChatController::class, 'index']);
+    Route::post('/chat/messages', [ChatController::class, 'store']);
+});
+
+Route::post('/chat/seen', [ChatSeenController::class, 'store'])
+    ->middleware('auth:sanctum');
+
+Route::post('/chat/typing', [ChatTypingController::class, 'store'])
+    ->middleware('auth:sanctum');

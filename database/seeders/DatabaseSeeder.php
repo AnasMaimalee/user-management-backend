@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             BranchSeeder::class,
             RankSeeder::class,
             PayrollSeeder::class,
+            ChatRoomSeeder::class,
         ]);
 
         User::factory()->create([
