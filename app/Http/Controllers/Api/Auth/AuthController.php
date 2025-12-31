@@ -90,7 +90,7 @@ class AuthController extends Controller
         // Admin & HR only menus
         if (in_array('super_admin', $userRoles) || in_array('hr', $userRoles)) {
             $menus[] = ['title' => 'Employees', 'route' => '/employees', 'icon' => 'UsergroupAddOutlined'];
-            $menus[] = ['title' => 'Enrollment', 'route' => '/admin/employees/enrollment', 'icon' => 'ApartmentOutlined'];
+            $menus[] = ['title' => 'Biometric Enrollment', 'route' => '/admin/biometric', 'icon' => 'ApartmentOutlined'];
             $menus[] = ['title' => 'Departments', 'route' => '/departments', 'icon' => 'ApartmentOutlined'];
             $menus[] = ['title' => 'Branches', 'route' => '/branches', 'icon' => 'BankOutlined'];
             $menus[] = ['title' => 'Job Ranks', 'route' => '/ranks', 'icon' => 'ProfileOutlined'];

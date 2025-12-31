@@ -20,5 +20,5 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => false, // TOKEN auth
+    'supports_credentials' => true, // TOKEN auth
 ];
