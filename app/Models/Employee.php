@@ -33,6 +33,8 @@ class Employee extends Model
         'allowances',
         'deductions',
         'monthly_savings',
+        'device_user_id',
+        'fingerprint_enrolled_at',
     ];
 
     protected $casts = [
@@ -101,4 +103,10 @@ class Employee extends Model
     {
         return $this->hasMany(Loan::class);
     }
+
+    public function dailyAttendances()
+    {
+        return $this->hasMany(DailyAttendance::class);
+    }
+
 }

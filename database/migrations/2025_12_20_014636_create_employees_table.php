@@ -23,6 +23,7 @@ return new class extends Migration
             $table->uuid('rank_id')->nullable();
             $table->uuid('branch_id')->nullable();
             $table->string('role');
+
             $table->enum('status', ['active', 'inactive', 'suspended'])->default('active');
 
             $table->timestamps();

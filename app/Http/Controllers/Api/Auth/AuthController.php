@@ -80,6 +80,7 @@ class AuthController extends Controller
             $menus[] = ['title' => 'Job Ranks', 'route' => '/ranks', 'icon' => 'ProfileOutlined'];
             $menus[] = ['title' => 'Branches', 'route' => '/branches', 'icon' => 'BankOutlined'];
             $menus[] = ['title' => 'Departments', 'route' => '/departments', 'icon' => 'ApartmentOutlined'];
+            $menus[] = ['title' => 'Attendance', 'route' => '/employees/attendance', 'icon' => 'FieldTimeOutlined'];
 
             //$menus[] = ['title' => 'Payroll', 'route' => '/payroll', 'icon' => 'DollarOutlined'];
             //$menus[] = ['title' => 'Loan Requests', 'route' => '/admin/loans', 'icon' => 'MoneyCollectOutlined'];
@@ -89,6 +90,7 @@ class AuthController extends Controller
         // Admin & HR only menus
         if (in_array('super_admin', $userRoles) || in_array('hr', $userRoles)) {
             $menus[] = ['title' => 'Employees', 'route' => '/employees', 'icon' => 'UsergroupAddOutlined'];
+            $menus[] = ['title' => 'Enrollment', 'route' => '/admin/employees/enrollment', 'icon' => 'ApartmentOutlined'];
             $menus[] = ['title' => 'Departments', 'route' => '/departments', 'icon' => 'ApartmentOutlined'];
             $menus[] = ['title' => 'Branches', 'route' => '/branches', 'icon' => 'BankOutlined'];
             $menus[] = ['title' => 'Job Ranks', 'route' => '/ranks', 'icon' => 'ProfileOutlined'];
@@ -96,6 +98,7 @@ class AuthController extends Controller
             $menus[] = ['title' => 'Loan Requests', 'route' => '/admin/loans', 'icon' => 'MoneyCollectOutlined'];
             $menus[] = ['title' => 'Withdrawal Requests', 'route' => '/admin/withdrawals', 'icon' => 'WalletOutlined'];
             $menus[] = ['title' => 'Leave Request', 'route' => '/admin/leave-request', 'icon' => 'FieldTimeOutlined'];
+            $menus[] = ['title' => 'Attendance', 'route' => '/admin/attendance', 'icon' => 'FieldTimeOutlined'];
 
         }
 

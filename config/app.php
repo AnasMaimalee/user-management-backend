@@ -15,8 +15,9 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
     'frontend_url' => env('APP_FRONTEND_URL', 'http://localhost:3001'),
-
+    'timezone' => 'Asia/Kolkata',
     Barryvdh\DomPDF\ServiceProvider::class,
+    App\Providers\BroadcastServiceProvider::class,
 
     /*
      *
@@ -71,7 +72,7 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    
 
     /*
     |--------------------------------------------------------------------------

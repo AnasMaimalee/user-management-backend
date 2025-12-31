@@ -15,6 +15,15 @@ use App\Http\Controllers\EmployeeInvitationController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\ChatSeenController;
 use App\Http\Controllers\Api\ChatTypingController;
+use App\Http\Controllers\Api\Attendance\EmployeeAttendanceController;
+use App\Http\Controllers\Api\Attendance\AdminAttendanceController;
+use App\Http\Controllers\Api\Attendance\AttendanceExportController;
+use App\Http\Controllers\Api\Attendance\BiometricEnrollmentController;
+
+
+
+
+use Jmrashed\Zkteco\Lib\ZKTeco;
 
 use App\Models\Employee;
 use Illuminate\Http\Request;
@@ -226,3 +235,38 @@ Route::post('/chat/seen', [ChatSeenController::class, 'store'])
 
 Route::post('/chat/typing', [ChatTypingController::class, 'store'])
     ->middleware('auth:sanctum');
+
+
+
+Route::middleware('auth:sanctum')->group(function () {
+
+    // Employee (self)
+    Route::get('/employee/attendance/summary', [EmployeeAttendanceController::class, 'summary']);
+    Route::get('/employee/attendance/history', [EmployeeAttendanceController::class, 'history']);
+
+    // Admin / HR
+    Route::get('/admin/attendance/today', [AdminAttendanceController::class, 'today']);
+    Route::get('/admin/attendance/report', [AdminAttendanceController::class, 'report']);
+    Route::get('/admin/attendance/employee/{employee}', [AdminAttendanceController::class, 'employee']);
+});
+
+
+
+Route::middleware(['auth:sanctum', 'role:admin|hr'])->group(function () {
+    Route::get('/admin/attendance/export/excel', [AttendanceExportController::class, 'excel']);
+});
+
+
+Route::middleware(['auth:sanctum', 'role:admin|hr'])->group(function () {
+    Route::post(
+        '/admin/attendance/enroll/{employee}',
+        [BiometricEnrollmentController::class, 'enroll']
+    );
+});
+
+Route::middleware(['auth:sanctum', 'role:admin|hr'])->group(function () {
+    Route::get(
+        '/admin/attendance/export/excel',
+        [AttendanceExportController::class, 'excel']
+    );
+});
