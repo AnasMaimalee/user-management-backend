@@ -19,7 +19,7 @@ class BiometricEnrollmentController extends Controller
         ]);
 
         /** 🔐 Validate biometric secret */
-        if ($request->biometric_secret !== config('services.biometric.secret')) {
+        if ($request->biometric_secret !== config('services.secret')) {
             return response()->json([
                 'message' => 'Unauthorized biometric action.'
             ], 403);
@@ -98,25 +98,26 @@ class BiometricEnrollmentController extends Controller
             'biometric_secret' => 'required|string'
         ]);
 
-        // Use services.secret as you discovered
         if ($request->biometric_secret !== config('services.secret')) {
             return response()->json(['message' => 'Invalid biometric secret'], 403);
         }
 
         $employee = Employee::findOrFail($request->employee_id);
 
-        // Check if there's anything to reset
+        // Nothing to reset
         if (!$employee->device_user_id && !$employee->fingerprint_enrolled_at) {
             return response()->json([
-                'message' => 'This employee has no biometric data to reset.'
+                'message' => 'No biometric data to reset for this employee.'
             ], 400);
         }
 
-        // Reset biometric data
+        // RESET BOTH FIELDS
         $employee->update([
             'device_user_id' => null,
             'fingerprint_enrolled_at' => null,
         ]);
+
+        // TODO: Send delete command to actual device (ZKTeco lib)
 
         return response()->json([
             'message' => 'Biometric fingerprint reset successfully!',
