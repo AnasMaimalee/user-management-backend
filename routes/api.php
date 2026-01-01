@@ -218,6 +218,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/my', [LoanController::class, 'myLoans']);            // View own loans
         Route::post('/request', [LoanController::class, 'requestLoan']);  // Request a loan
 
+        Route::get('/my/export/pdf', [LoanExportController::class, 'myPdf']);
+        Route::get('/my/export/excel', [LoanExportController::class, 'myExcel']);
         // Admin routes
 
         Route::get('/pending', [LoanController::class, 'pendingLoans']);            // List pending loans

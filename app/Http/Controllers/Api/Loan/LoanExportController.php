@@ -11,29 +11,30 @@ use App\Exports\LoanExport;
 
 class LoanExportController extends Controller
 {
-    private function getFilteredLoans(Request $request)
+    /**
+     * Shared method to get filtered loans
+     * Used by both admin and employee exports
+     */
+    private function getFilteredLoans(Request $request, $employeeId = null)
     {
-        $request->validate([
-            'year'          => 'nullable|integer',
-            'month'         => 'nullable|integer|min:1|max:12',
-            'employee_id'   => 'nullable|uuid|exists:employees,id',
-            'department_id' => 'nullable|exists:departments,id',
-            'status'        => 'nullable|in:pending,approved,rejected,completed',
-        ]);
-
         $query = Loan::with(['employee.department'])->latest('updated_at');
 
-        // If no status sent → this is from History table → exclude pending
-        if (!$request->filled('status')) {
-            $query->whereNot('status', 'pending');
+        // Restrict to specific employee if provided (for "My Loans")
+        if ($employeeId) {
+            $query->where('employee_id', $employeeId);
         }
 
-        // If status sent (from Pending table) → use it
+        // Admin-only: Exclude pending by default unless status specified
+        if (!$employeeId && !$request->filled('status')) {
+            $query->whereNot('status', 'pending'); // History view default
+        }
+
+        // If status is explicitly sent (e.g. from Pending table), apply it
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        // Apply common filters
+        // Year filter
         if ($request->filled('year')) {
             $year = $request->year;
             $query->where(function ($q) use ($year) {
@@ -43,6 +44,7 @@ class LoanExportController extends Controller
             });
         }
 
+        // Month filter (requires year)
         if ($request->filled('month') && $request->filled('year')) {
             $month = $request->month;
             $query->where(function ($q) use ($month) {
@@ -52,64 +54,118 @@ class LoanExportController extends Controller
             });
         }
 
-        if ($request->filled('employee_id')) {
-            $query->where('employee_id', $request->employee_id);
-        }
+        // Admin filters (not available to employees)
+        if (!$employeeId) {
+            if ($request->filled('employee_id')) {
+                $query->where('employee_id', $request->employee_id);
+            }
 
-        if ($request->filled('department_id')) {
-            $query->whereHas('employee', function ($q) use ($request) {
-                $q->where('department_id', $request->department_id);
-            });
+            if ($request->filled('department_id')) {
+                $query->whereHas('employee', function ($q) use ($request) {
+                    $q->where('department_id', $request->department_id);
+                });
+            }
         }
 
         $loans = $query->get();
 
         if ($loans->isEmpty()) {
-            abort(404, 'No records found');
+            abort(404, 'No loan records found for the selected filters');
         }
 
+        // Add paid_amount accessor
         $loans->transform(fn($loan) => $loan->append('paid_amount'));
 
         return $loans;
     }
 
-    private function getFilename(Request $request, $ext)
+    /**
+     * Employee: Export MY loans as PDF
+     */
+    public function myPdf(Request $request)
     {
-        $parts = ['Loan-Report'];
-
-        if ($request->filled('month') && $request->filled('year')) {
-            $parts[] = date('F', mktime(0,0,0,$request->month,1));
-            $parts[] = $request->year;
-        } elseif ($request->filled('year')) {
-            $parts[] = $request->year;
-        }
-
-        if ($request->filled('status')) {
-            $parts[] = ucfirst($request->status);
-        }
-
-        return implode('-', $parts) . '.' . $ext;
-    }
-
-    public function pdf(Request $request)
-    {
-        $loans = $this->getFilteredLoans($request);
+        $loans = $this->getFilteredLoans($request, auth()->user()->employee_id);
 
         $data = [
-            'loans' => $loans,
-            'title' => 'Loan Report' . ($request->filled('status') ? ' - ' . ucfirst($request->status) : ''),
+            'loans'        => $loans,
+            'title'        => 'My Loan Report',
             'generated_at' => now()->format('d F Y, H:i'),
         ];
 
-        $pdf = Pdf::loadView('exports.loan-pdf', $data)->setPaper('a4', 'landscape');
+        $pdf = Pdf::loadView('exports.loan-pdf', $data)
+            ->setPaper('a4', 'landscape');
 
-        return $pdf->download($this->getFilename($request, 'pdf'));
+        $filename = 'My-Loans-' . now()->format('Y-m-d') . '.pdf';
+
+        return $pdf->download($filename);
     }
 
-    public function excel(Request $request)
+    /**
+     * Employee: Export MY loans as Excel
+     */
+    public function myExcel(Request $request)
     {
+        $loans = $this->getFilteredLoans($request, auth()->user()->employee_id);
+
+        $filename = 'My-Loans-' . now()->format('Y-m-d') . '.xlsx';
+
+        return Excel::download(new LoanExport($loans), $filename);
+    }
+
+    /**
+     * Admin: Export all/filtered loans as PDF
+     */
+    public function pdf(Request $request)
+    {
+        $request->validate([
+            'year'          => 'nullable|integer|min:2000|max:2035',
+            'month'         => 'nullable|integer|min:1|max:12',
+            'employee_id'   => 'nullable|uuid|exists:employees,id',
+            'department_id' => 'nullable|exists:departments,id',
+            'status'        => 'nullable|in:pending,approved,rejected,completed',
+        ]);
+
         $loans = $this->getFilteredLoans($request);
 
-        return Excel::download(new LoanExport($loans), $this->getFilename($request, 'xlsx'));
+        $title = 'Loan Report';
+        if ($request->filled('status')) {
+            $title .= ' - ' . ucfirst($request->status);
+        }
+        if ($request->filled('year')) {
+            $title .= ' - ' . $request->year;
+        }
+
+        $data = [
+            'loans'        => $loans,
+            'title'        => $title,
+            'generated_at' => now()->format('d F Y, H:i'),
+        ];
+
+        $pdf = Pdf::loadView('exports.loan-pdf', $data)
+            ->setPaper('a4', 'landscape');
+
+        $filename = 'Loan-Report-' . now()->format('Y-m-d') . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
+    /**
+     * Admin: Export all/filtered loans as Excel
+     */
+    public function excel(Request $request)
+    {
+        $request->validate([
+            'year'          => 'nullable|integer|min:2000|max:2035',
+            'month'         => 'nullable|integer|min:1|max:12',
+            'employee_id'   => 'nullable|uuid|exists:employees,id',
+            'department_id' => 'nullable|exists:departments,id',
+            'status'        => 'nullable|in:pending,approved,rejected,completed',
+        ]);
+
+        $loans = $this->getFilteredLoans($request);
+
+        $filename = 'Loan-Report-' . now()->format('Y-m-d') . '.xlsx';
+
+        return Excel::download(new LoanExport($loans), $filename);
     }
 }

@@ -1,29 +1,42 @@
 <?php
 
-
 namespace App\Mail;
 
+use App\Models\Loan;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use App\Models\Loan;
 
 class LoanStatusMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public Loan $loan;
-    public string $statusMessage;
+    public $loan;
+    public $status;
 
-    public function __construct(Loan $loan, string $statusMessage)
+    /**
+     * Create a new message instance.
+     */
+    public function __construct(Loan $loan, string $status)
     {
         $this->loan = $loan;
-        $this->statusMessage = $statusMessage;
+        $this->status = $status;
     }
 
+    /**
+     * Build the message.
+     */
     public function build()
     {
-        return $this->subject("Loan Request Status: {$this->statusMessage}")
-            ->view('emails.loan_status');
+        $subject = $this->status === 'approved'
+            ? 'Your Loan Request Has Been Approved!'
+            : 'Update on Your Loan Request';
+
+        return $this->subject($subject)
+            ->view('emails.loan-status')
+            ->with([
+                'loan'   => $this->loan,
+                'status' => $this->status,
+            ]);
     }
 }

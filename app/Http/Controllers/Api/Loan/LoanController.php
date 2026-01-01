@@ -80,7 +80,7 @@ class LoanController extends Controller
     {
         $request->validate([
             'action' => 'required|in:approve,reject',
-            'note' => 'nullable|string|max:500',
+            'note'   => 'nullable|string|max:500',
         ]);
 
         if ($loan->status !== 'pending') {
@@ -88,9 +88,7 @@ class LoanController extends Controller
         }
 
         DB::transaction(function () use ($request, $loan) {
-
             if ($request->action === 'approve') {
-
                 $loan->monthly_deduction = $loan->amount / $loan->months;
                 $loan->remaining_amount = $loan->amount;
                 $loan->approved_at = now();
@@ -104,7 +102,6 @@ class LoanController extends Controller
                 );
 
                 $loan->status = 'approved';
-
             } else {
                 $loan->status = 'rejected';
             }
@@ -114,14 +111,23 @@ class LoanController extends Controller
             $loan->save();
         });
 
-        // ✅ SEND EMAIL AFTER SUCCESSFUL TRANSACTION
-        Mail::to($loan->employee->email)->send(
-            new LoanStatusMail($loan)
-        );
+        // SEND EMAIL — FIXED: Pass both loan and status/action
+        try {
+            Mail::to($loan->employee->email)->send(
+                new LoanStatusMail($loan, $loan->status)  // ← Now passing 2 arguments
+            );
+        } catch (\Exception $e) {
+            \Log::warning('Failed to send loan status email', [
+                'loan_id' => $loan->id,
+                'employee_email' => $loan->employee->email,
+                'error' => $e->getMessage()
+            ]);
+            // Don't fail the response just because email failed
+        }
 
         return response()->json([
             'message' => "Loan {$loan->status} successfully",
-            'loan' => $loan,
+            'loan'    => $loan->load('employee'),
         ]);
     }
 
