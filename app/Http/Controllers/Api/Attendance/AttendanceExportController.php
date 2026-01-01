@@ -15,11 +15,16 @@ class AttendanceExportController extends Controller
     {
         $request->validate([
             'from' => 'required|date',
-            'to'   => 'required|date|after_or_equal:from',
+            'to' => 'required|date|after_or_equal:from',
+            'department_id' => 'nullable|uuid'
         ]);
 
         return Excel::download(
-            new AttendanceReportExport($request->from, $request->to),
+            new AttendanceReportExport(
+                $request->from,
+                $request->to,
+                $request->department_id
+            ),
             'attendance-report.xlsx'
         );
     }
@@ -28,20 +33,32 @@ class AttendanceExportController extends Controller
     {
         $request->validate([
             'from' => 'required|date',
-            'to'   => 'required|date|after_or_equal:from',
+            'to' => 'required|date|after_or_equal:from',
+            'department_id' => 'nullable|uuid'
         ]);
 
-        $data = DailyAttendance::with('employee')
-            ->whereBetween('attendance_date', [$request->from, $request->to])
+        $query = DailyAttendance::query()
+            ->with(['employee.department'])
+            ->whereBetween('attendance_date', [$request->from, $request->to]);
+
+        // ✅ FILTER BY DEPARTMENT (CORRECT WAY)
+        if ($request->department_id) {
+            $query->whereHas('employee', function ($q) use ($request) {
+                $q->where('department_id', $request->department_id);
+            });
+        }
+
+        $data = $query
             ->orderBy('attendance_date')
             ->get();
 
         $pdf = PDF::loadView('exports.attendance', [
             'data' => $data,
             'from' => $request->from,
-            'to'   => $request->to,
+            'to' => $request->to,
         ]);
 
         return $pdf->download('attendance-report.pdf');
     }
+
 }

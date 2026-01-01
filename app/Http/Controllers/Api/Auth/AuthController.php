@@ -33,6 +33,7 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+
         $request->validate([
             'email' => 'required|string|email',
             'password' => 'required|string',
@@ -80,7 +81,7 @@ class AuthController extends Controller
             $menus[] = ['title' => 'Job Ranks', 'route' => '/ranks', 'icon' => 'ProfileOutlined'];
             $menus[] = ['title' => 'Branches', 'route' => '/branches', 'icon' => 'BankOutlined'];
             $menus[] = ['title' => 'Departments', 'route' => '/departments', 'icon' => 'ApartmentOutlined'];
-            $menus[] = ['title' => 'Attendance', 'route' => '/employees/attendance', 'icon' => 'FieldTimeOutlined'];
+            $menus[] = ['title' => 'Attendance', 'route' => '/employees/attendance', 'icon' => 'ClockCircleOutlined'];
 
             //$menus[] = ['title' => 'Payroll', 'route' => '/payroll', 'icon' => 'DollarOutlined'];
             //$menus[] = ['title' => 'Loan Requests', 'route' => '/admin/loans', 'icon' => 'MoneyCollectOutlined'];
@@ -90,7 +91,7 @@ class AuthController extends Controller
         // Admin & HR only menus
         if (in_array('super_admin', $userRoles) || in_array('hr', $userRoles)) {
             $menus[] = ['title' => 'Employees', 'route' => '/employees', 'icon' => 'UsergroupAddOutlined'];
-            $menus[] = ['title' => 'Biometric Enrollment', 'route' => '/admin/biometric', 'icon' => 'ApartmentOutlined'];
+            $menus[] = ['title' => 'Biometric Enrollment', 'route' => '/admin/biometric', 'icon' => 'ScanOutlined'];
             $menus[] = ['title' => 'Departments', 'route' => '/departments', 'icon' => 'ApartmentOutlined'];
             $menus[] = ['title' => 'Branches', 'route' => '/branches', 'icon' => 'BankOutlined'];
             $menus[] = ['title' => 'Job Ranks', 'route' => '/ranks', 'icon' => 'ProfileOutlined'];
@@ -98,7 +99,7 @@ class AuthController extends Controller
             $menus[] = ['title' => 'Loan Requests', 'route' => '/admin/loans', 'icon' => 'MoneyCollectOutlined'];
             $menus[] = ['title' => 'Withdrawal Requests', 'route' => '/admin/withdrawals', 'icon' => 'WalletOutlined'];
             $menus[] = ['title' => 'Leave Request', 'route' => '/admin/leave-request', 'icon' => 'FieldTimeOutlined'];
-            $menus[] = ['title' => 'Attendance', 'route' => '/admin/attendance', 'icon' => 'FieldTimeOutlined'];
+            $menus[] = ['title' => 'Attendance', 'route' => '/admin/attendance', 'icon' => 'ClockCircleOutlined'];
 
         }
 

@@ -109,4 +109,5 @@ class Employee extends Model
         return $this->hasMany(DailyAttendance::class);
     }
 
+
 }

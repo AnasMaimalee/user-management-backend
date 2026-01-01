@@ -50,27 +50,38 @@ class AdminAttendanceController extends Controller
                 ->get()
         );
     }
-
     public function record(Request $request)
     {
         $request->validate([
             'employee_id' => 'required|exists:employees,id',
-            'status' => 'required|string',
-            'worked_minutes' => 'nullable|integer',
-            'late_minutes' => 'nullable|integer',
+            'status' => 'required|string|in:present,late,absent,on_leave,holiday',
+            'worked_minutes' => 'nullable|integer|min:0',
+            'late_minutes' => 'nullable|integer|min:0',
         ]);
 
         $employee = Employee::findOrFail($request->employee_id);
 
-        // CRITICAL CHECK: Only allow clock-in if fingerprint enrolled
+        // Check if biometric device is connected/active
+        $device = BiometricDevice::where('is_active', true)->first();
+
+        if (!$device) {
+            return response()->json([
+                'message' => 'No biometric device detected. Please connect and activate a device.',
+                'action_required' => 'admin_check_device'
+            ], 503); // Service Unavailable
+        }
+
+        // Check if employee is enrolled
         if (!$employee->fingerprint_enrolled_at) {
             return response()->json([
-                'message' => 'Biometric enrollment required. Please complete fingerprint enrollment before clocking in.'
+                'message' => 'Biometric enrollment required. Please complete fingerprint enrollment before clocking in.',
+                'action_required' => 'enroll_employee'
             ], 403);
         }
 
-        // Optional: Prevent double clock-in on same day
         $today = Carbon::today();
+
+        // Prevent duplicate entry
         $existing = DailyAttendance::where('employee_id', $employee->id)
             ->whereDate('attendance_date', $today)
             ->first();
@@ -78,26 +89,25 @@ class AdminAttendanceController extends Controller
         if ($existing) {
             return response()->json([
                 'message' => 'Attendance already recorded for today.',
-                'attendance' => $existing
+                'attendance' => $existing->load('employee'),
+                'action_required' => 'already_recorded'
             ], 409);
         }
 
         $attendance = DailyAttendance::create([
             'employee_id' => $employee->id,
             'attendance_date' => $today,
-            'status' => $request->status ?? 'present',
+            'clock_in' => now(),
+            'status' => $request->status,
             'worked_minutes' => $request->worked_minutes ?? 0,
             'late_minutes' => $request->late_minutes ?? 0,
-            'clock_in' => now(),
-            // clock_out can be set later if needed
         ]);
 
-        // Broadcast realtime update
         event(new AttendanceRecorded($attendance->load('employee')));
 
         return response()->json([
             'message' => 'Attendance recorded successfully!',
-            'attendance' => $attendance->load('employee')
+            'attendance' => $attendance->load('employee'),
         ], 201);
     }
 }

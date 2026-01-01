@@ -5,31 +5,47 @@ namespace App\Exports;
 use App\Models\DailyAttendance;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 
-class AttendanceReportExport implements FromCollection, WithHeadings
+class AttendanceReportExport implements FromCollection, WithHeadings, ShouldAutoSize
 {
-    protected $from;
-    protected $to;
-
-    public function __construct($from, $to)
-    {
-        $this->from = $from;
-        $this->to   = $to;
-    }
+    public function __construct(
+        protected string $from,
+        protected string $to,
+        protected ?string $departmentId = null
+    ) {}
 
     public function collection()
     {
-        return DailyAttendance::with('employee')
-            ->whereBetween('attendance_date', [$this->from, $this->to])
+        $query = DailyAttendance::query()
+            ->with(['employee.department'])
+            ->whereBetween('attendance_date', [$this->from, $this->to]);
+
+        // ✅ FILTER BY DEPARTMENT (CRITICAL)
+        if ($this->departmentId) {
+            $query->whereHas('employee', function ($q) {
+                $q->where('department_id', $this->departmentId);
+            });
+        }
+
+        return $query
+            ->orderBy('attendance_date')
             ->get()
             ->map(function ($row) {
                 return [
-                    'Employee ID'   => $row->employee->employee_no ?? '',
-                    'Employee Name' => $row->employee->first_name . ' ' . $row->employee->last_name,
-                    'Date'          => $row->attendance_date,
-                    'Status'        => ucfirst($row->status),
-                    'Worked (mins)' => $row->worked_minutes,
-                    'Late (mins)'   => $row->late_minutes,
+                    'Employee Name' =>
+                        $row->employee->first_name . ' ' . $row->employee->last_name,
+
+                    'Department' =>
+                        $row->employee->department->name ?? '-',
+
+                    'Date' => $row->attendance_date,
+
+                    'Status' => strtoupper($row->status),
+
+                    'Clock In' => $row->clock_in ?? '-',
+
+                    'Clock Out' => $row->clock_out ?? '-',
                 ];
             });
     }
@@ -37,12 +53,12 @@ class AttendanceReportExport implements FromCollection, WithHeadings
     public function headings(): array
     {
         return [
-            'Employee ID',
             'Employee Name',
+            'Department',
             'Date',
             'Status',
-            'Worked (mins)',
-            'Late (mins)',
+            'Clock In',
+            'Clock Out',
         ];
     }
 }

@@ -35,4 +35,6 @@ return [
         ],
     ],
 
+    'secret' => env('BIOMETRIC_SECRET', 'fallback-secret'),
+
 ];

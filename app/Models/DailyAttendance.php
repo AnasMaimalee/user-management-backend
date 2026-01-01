@@ -32,4 +32,6 @@ class DailyAttendance extends Model
         return $this->belongsTo(Employee::class);
     }
 
+
+
 }
