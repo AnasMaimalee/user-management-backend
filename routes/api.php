@@ -15,14 +15,14 @@ use App\Http\Controllers\Api\ChatTypingController;
 use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\LeaveRequestController;
-use App\Http\Controllers\Api\LoanController;
+use App\Http\Controllers\Api\Loan\LoanController;
+use App\Http\Controllers\Api\Loan\LoanExportController;
 use App\Http\Controllers\Api\Payroll\PayrollController;
+use App\Http\Controllers\Api\Payroll\PayrollExportController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\RankController;
 use App\Http\Controllers\Api\WalletController;
 use App\Http\Controllers\EmployeeInvitationController;
-use App\Http\Controllers\Api\Payroll\PayrollExportController;
-
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -219,8 +219,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/request', [LoanController::class, 'requestLoan']);  // Request a loan
 
         // Admin routes
-            Route::get('/pending', [LoanController::class, 'pendingLoans']);            // List pending loans
-            Route::post('/process/{loan}', [LoanController::class, 'processLoan']);     // Approve or reject loan
+
+        Route::get('/pending', [LoanController::class, 'pendingLoans']);            // List pending loans
+        Route::post('/process/{loan}', [LoanController::class, 'processLoan']);     // Approve or reject loan
+        Route::get('/export/pdf', [LoanExportController::class, 'pdf']);
+        Route::get('/export/excel', [LoanExportController::class, 'excel']);
+        Route::get('/history', [LoanController::class, 'history']);
+        Route::get('/pending', [LoanController::class, 'pending']);
+
     });
 
 });

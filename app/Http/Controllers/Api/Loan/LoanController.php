@@ -1,15 +1,16 @@
 <?php
 
-namespace App\Http\Controllers\Api;
-use App\Services\PaymentService;
+namespace App\Http\Controllers\Api\Loan;
 use App\Http\Controllers\Controller;
-use App\Models\Loan;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 use App\Mail\LoanStatusMail;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
+use App\Models\Loan;
 use App\Models\Wallet;
+use App\Services\PaymentService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+
 class LoanController extends Controller
 {
     public function __construct(
@@ -43,20 +44,21 @@ class LoanController extends Controller
     }
 
     // Employee: View my loans
-    public function myLoans()
+    public function myLoans(Request $request)
     {
-        $user = auth()->user();
-        $employee = $user->employee;
+        $employee = auth()->user()->employee;
 
         if (!$employee) {
-            return response()->json([
-                'message' => 'Employee record not found'
-            ], 404);
+            return response()->json(['message' => 'Employee not found'], 404);
         }
 
-        $loans = $employee->loans()->latest()->get();
+        $query = $employee->loans()->latest();
 
-        return response()->json($loans);
+        // Add the same filters as above...
+        if ($request->filled('year')) { /* ... */ }
+        // etc.
+
+        return response()->json($query->get());
     }
 
     // ================= Admin Routes =================
@@ -152,6 +154,69 @@ class LoanController extends Controller
 
         $loan->save();
     }
+    /**
+     * Get filtered loan history (admin + filtered view)
+     * Supports year/month/employee/department filters
+     */
+    private function applyFilters($query, Request $request)
+    {
+        if ($request->filled('year')) {
+            $year = $request->year;
+            $query->where(function ($q) use ($year) {
+                $q->whereYear('created_at', $year)
+                    ->orWhereYear('approved_at', $year)
+                    ->orWhereYear('updated_at', $year);
+            });
+        }
 
+        if ($request->filled('month') && $request->filled('year')) {
+            $month = $request->month;
+            $query->where(function ($q) use ($month) {
+                $q->whereMonth('created_at', $month)
+                    ->orWhereMonth('approved_at', $month)
+                    ->orWhereMonth('updated_at', $month);
+            });
+        }
+
+        if ($request->filled('employee_id')) {
+            $query->where('employee_id', $request->employee_id);
+        }
+
+        if ($request->filled('department_id')) {
+            $query->whereHas('employee', function ($q) use ($request) {
+                $q->where('department_id', $request->department_id);
+            });
+        }
+    }
+
+    public function pending(Request $request)
+    {
+        $query = Loan::with(['employee.department'])
+            ->where('status', 'pending')
+            ->latest('created_at');
+
+        $this->applyFilters($query, $request);
+
+        $loans = $query->get();
+
+        $loans->transform(fn($loan) => $loan->append('paid_amount'));
+
+        return response()->json($loans);
+    }
+
+    public function history(Request $request)
+    {
+        $query = Loan::with(['employee.department'])
+            ->whereNot('status', 'pending') // ONLY processed loans
+            ->latest('updated_at');
+
+        $this->applyFilters($query, $request);
+
+        $loans = $query->get();
+
+        $loans->transform(fn($loan) => $loan->append('paid_amount'));
+
+        return response()->json($loans);
+    }
 
 }

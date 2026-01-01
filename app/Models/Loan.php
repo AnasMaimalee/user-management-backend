@@ -55,4 +55,9 @@ class Loan extends Model
         }
         $this->save();
     }
+
+    public function getPaidAmountAttribute(): float
+    {
+        return max(0, $this->amount - $this->remaining_amount);
+    }
 }
