@@ -252,14 +252,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // Employee (self)
     Route::get('/employee/attendance/summary', [EmployeeAttendanceController::class, 'summary']);
     Route::get('/employee/attendance/history', [EmployeeAttendanceController::class, 'history']);
-
+    Route::get('/employee/attendance/my/export/pdf', [AttendanceExportController::class, 'myPdf']);
+    Route::get('/employee/attendance/my/export/excel', [AttendanceExportController::class, 'myExcel']);
     // Admin / HR
     Route::get('/admin/attendance/today', [AdminAttendanceController::class, 'today']);
     Route::get('/admin/attendance/report', [AdminAttendanceController::class, 'report']);
     Route::get('/admin/attendance/employee/{employee}', [AdminAttendanceController::class, 'employee']);
-});
 
-Route::middleware('auth:sanctum')->group(function () {
     // Employee (self)
     Route::get('/employee/attendance/summary', [EmployeeAttendanceController::class, 'summary']);
     Route::get('/employee/attendance/history', [EmployeeAttendanceController::class, 'history']);
@@ -271,6 +270,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Admin / HR - Manual record (NEW)
     Route::post('/admin/attendance/record', [AdminAttendanceController::class, 'record']);
+    Route::get('/admin/attendance/export/pdf', [AttendanceExportController::class, 'pdf']);
+    Route::get('/admin/attendance/export/excel', [AttendanceExportController::class, 'excel']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {
