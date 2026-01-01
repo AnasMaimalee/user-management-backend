@@ -31,7 +31,7 @@ class PayslipMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.payslip-email', // Custom email body
+            view: 'emails.payslip', // Custom email body
             with: ['payroll' => $this->payroll],
         );
     }

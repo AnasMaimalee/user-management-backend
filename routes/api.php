@@ -1,33 +1,32 @@
 <?php
 
+use App\Http\Controllers\Api\Attendance\AdminAttendanceController;
+use App\Http\Controllers\Api\Attendance\AttendanceExportController;
+use App\Http\Controllers\Api\Attendance\AttendancePunchController;
+use App\Http\Controllers\Api\Attendance\AttendanceStatsController;
+use App\Http\Controllers\Api\Attendance\BiometricEnrollmentController;
+use App\Http\Controllers\Api\Attendance\EmployeeAttendanceController;
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\BranchController;
+use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\Api\ChatSeenController;
+use App\Http\Controllers\Api\ChatTypingController;
 use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\LeaveRequestController;
 use App\Http\Controllers\Api\LoanController;
-use App\Http\Controllers\Api\PayrollController;
+use App\Http\Controllers\Api\Payroll\PayrollController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\RankController;
 use App\Http\Controllers\Api\WalletController;
 use App\Http\Controllers\EmployeeInvitationController;
-use App\Http\Controllers\Api\ChatController;
-use App\Http\Controllers\Api\ChatSeenController;
-use App\Http\Controllers\Api\ChatTypingController;
-use App\Http\Controllers\Api\Attendance\EmployeeAttendanceController;
-use App\Http\Controllers\Api\Attendance\AdminAttendanceController;
-use App\Http\Controllers\Api\Attendance\AttendanceExportController;
-use App\Http\Controllers\Api\Attendance\BiometricEnrollmentController;
-use App\Http\Controllers\Api\Attendance\AttendanceStatsController;
-use App\Http\Controllers\Api\Attendance\AttendancePunchController;
-
-
-use Jmrashed\Zkteco\Lib\ZKTeco;
+use App\Http\Controllers\Api\Payroll\PayrollExportController;
 
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -186,6 +185,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/payrolls',      [PayrollController::class, 'index']);
     Route::post('/payrolls/run', [PayrollController::class, 'run']);
 
+    Route::get('/payrolls/export/pdf', [PayrollExportController::class, 'pdf']);
+    Route::get('/payrolls/export/excel', [PayrollExportController::class, 'excel']);
     /*
     |--------------------------------------------------------------------------
     | WALLET
