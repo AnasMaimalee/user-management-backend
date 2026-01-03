@@ -157,6 +157,10 @@ Route::middleware('auth:sanctum')->group(function () {
         [EmployeeInvitationController::class, 'sendInvitation']
     );
 
+    Route::get('/employee/attendance/summary', [EmployeeAttendanceController::class, 'summary']);
+    Route::get('/employee/attendance/history', [EmployeeAttendanceController::class, 'history']);
+    Route::get('/employee/attendance/my/export/pdf', [EmployeeAttendanceController::class, 'exportPdf']);
+    Route::get('/employee/attendance/my/export/excel', [EmployeeAttendanceController::class, 'exportExcel']);
     /*
     |--------------------------------------------------------------------------
     | LEAVE MANAGEMENT
