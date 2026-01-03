@@ -162,7 +162,8 @@ Route::middleware('auth:sanctum')->group(function () {
     | LEAVE MANAGEMENT
     |--------------------------------------------------------------------------
     */
-
+    Route::get('/leaves/export-pdf/{type}', [LeaveRequestController::class, 'exportPdf']);
+    Route::get('/leaves/export-excel/{type}', [LeaveRequestController::class, 'exportExcel']);
     // Staff
     Route::post('/leaves',     [LeaveRequestController::class, 'store']);
     Route::get('/leaves/my',   [LeaveRequestController::class, 'myLeaves']);

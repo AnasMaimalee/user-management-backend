@@ -14,8 +14,13 @@ class AttendanceExportController extends Controller
     // Employee: My Attendance PDF
     public function myPdf(Request $request)
     {
-        $from = $request->query('from', now()->subDays(30)->format('Y-m-d'));
-        $to = $request->query('to', now()->format('Y-m-d'));
+        $request->validate([
+            'from' => 'nullable|date',
+            'to'   => 'nullable|date|after_or_equal:from',
+        ]);
+
+        $from = $request->from ?? now()->subDays(30)->format('Y-m-d');
+        $to   = $request->to   ?? now()->format('Y-m-d');
 
         $records = DailyAttendance::with(['employee'])
             ->where('employee_id', auth()->user()->employee_id)
@@ -24,32 +29,48 @@ class AttendanceExportController extends Controller
             ->get();
 
         if ($records->isEmpty()) {
-            abort(404, 'No attendance records found');
+            abort(404, 'No attendance records found for the selected period');
         }
 
         $data = [
-            'records' => $records,
-            'from' => $from,
-            'to' => $to,
-            'title' => 'My Attendance Report',
+            'records'      => $records,
+            'from'         => $from,
+            'to'           => $to,
+            'title'        => 'My Attendance Report',
             'generated_at' => now()->format('d F Y, H:i'),
         ];
 
         $pdf = Pdf::loadView('exports.attendance-pdf', $data)
             ->setPaper('a4', 'landscape');
 
-        return $pdf->download('My-Attendance-' . now()->format('Y-m-d') . '.pdf');
+        $filename = 'My-Attendance';
+        if ($request->from && $request->to) {
+            $filename .= "_{$request->from}_to_{$request->to}";
+        }
+        $filename .= '.pdf';
+
+        return $pdf->download($filename);
     }
 
-    // Employee: My Attendance Excel
     public function myExcel(Request $request)
     {
-        $from = $request->query('from', now()->subDays(30)->format('Y-m-d'));
-        $to = $request->query('to', now()->format('Y-m-d'));
+        $request->validate([
+            'from' => 'nullable|date',
+            'to'   => 'nullable|date|after_or_equal:from',
+        ]);
+
+        $from = $request->from ?? now()->subDays(30)->format('Y-m-d');
+        $to   = $request->to   ?? now()->format('Y-m-d');
+
+        $filename = 'My-Attendance';
+        if ($request->from && $request->to) {
+            $filename .= "_{$request->from}_to_{$request->to}";
+        }
+        $filename .= '-' . now()->format('Y-m-d') . '.xlsx';
 
         return Excel::download(
             new AttendanceReportExport($from, $to, null, auth()->user()->employee_id),
-            'My-Attendance-' . now()->format('Y-m-d') . '.xlsx'
+            $filename
         );
     }
 
@@ -57,14 +78,17 @@ class AttendanceExportController extends Controller
     public function pdf(Request $request)
     {
         $request->validate([
-            'from' => 'required|date',
-            'to' => 'required|date|after_or_equal:from',
+            'from'          => 'nullable|date',
+            'to'            => 'nullable|date|after_or_equal:from',
             'department_id' => 'nullable|exists:departments,id',
-            'employee_id' => 'nullable|exists:employees,id',
+            'employee_id'   => 'nullable|exists:employees,id',
         ]);
 
+        $from = $request->from ?? now()->subDays(31)->format('Y-m-d');
+        $to   = $request->to   ?? now()->format('Y-m-d');
+
         $records = DailyAttendance::with(['employee.department'])
-            ->whereBetween('attendance_date', [$request->from, $request->to]);
+            ->whereBetween('attendance_date', [$from, $to]);
 
         if ($request->filled('employee_id')) {
             $records->where('employee_id', $request->employee_id);
@@ -77,7 +101,7 @@ class AttendanceExportController extends Controller
         $records = $records->orderBy('attendance_date')->get();
 
         if ($records->isEmpty()) {
-            abort(404, 'No attendance records found');
+            abort(404, 'No attendance records found for the selected period');
         }
 
         $data = [
@@ -98,20 +122,40 @@ class AttendanceExportController extends Controller
     public function excel(Request $request)
     {
         $request->validate([
-            'from' => 'required|date',
-            'to' => 'required|date|after_or_equal:from',
+            'from'          => 'nullable|date',
+            'to'            => 'nullable|date|after_or_equal:from',
             'department_id' => 'nullable|exists:departments,id',
-            'employee_id' => 'nullable|exists:employees,id',
+            'employee_id'   => 'nullable|exists:employees,id',
         ]);
 
+        // Use provided dates or fallback to last 31 days
+        $from = $request->from ?? now()->subDays(31)->format('Y-m-d');
+        $to   = $request->to   ?? now()->format('Y-m-d');
+
+        // Build the query (same logic as PDF)
+        $query = DailyAttendance::with(['employee.department'])
+            ->whereBetween('attendance_date', [$from, $to]);
+
+        if ($request->filled('employee_id')) {
+            $query->where('employee_id', $request->employee_id);
+        }
+
+        if ($request->filled('department_id')) {
+            $query->whereHas('employee', function ($q) use ($request) {
+                $q->where('department_id', $request->department_id);
+            });
+        }
+
+        $records = $query->orderBy('attendance_date')->get();
+
+        if ($records->isEmpty()) {
+            abort(404, 'No attendance records found for the selected period');
+        }
+
+        // Export using the same export class
         return Excel::download(
-            new AttendanceReportExport(
-                $request->from,
-                $request->to,
-                $request->department_id,
-                $request->employee_id
-            ),
-            'Attendance-Report-' . now()->format('Y-m-d') . '.xlsx'
+            new AttendanceReportExport($from, $to, $request->department_id, $request->employee_id),
+            'Attendance-Report-' . $from . '_to_' . $to . '-' . now()->format('Y-m-d') . '.xlsx'
         );
     }
 }

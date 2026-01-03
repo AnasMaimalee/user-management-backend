@@ -8,7 +8,8 @@ use App\Models\LeaveRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
-
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\LeaveExport;
 class LeaveRequestController extends Controller
 {
 
@@ -16,10 +17,13 @@ class LeaveRequestController extends Controller
     {
         abort_unless($request->user()->can('view leaves'), 403);
 
-        $leaveRequests = LeaveRequest::with('employee')
-            ->whereHas('employee')
-            ->latest()
-            ->get();
+        $leaveRequests = LeaveRequest::with([
+            'user',
+            'user.employee',
+            'user.employee.department',
+            'user.employee.rank',
+            'user.employee.branch'
+        ])->latest()->get();
 
         return response()->json($leaveRequests);
     }
@@ -73,6 +77,7 @@ class LeaveRequestController extends Controller
                 'admin_note' => 'required|string|min:10|max:255',
             ]);
         }
+
         $leave->update([
             'status'       => $validated['status'],
             'admin_note'   => $validated['admin_note'] ?? null,
@@ -80,12 +85,117 @@ class LeaveRequestController extends Controller
             'reviewed_at'  => now(),
         ]);
 
-        // Send email notification
-        Mail::to($leave->employee->email)->send(new LeaveStatusMail($leave));
+        // SAFE EMAIL SEND - This prevents the crash
+        $employeeEmail = $leave->user?->employee?->email;
+
+        if ($employeeEmail) {
+            try {
+                Mail::to($employeeEmail)->send(new LeaveStatusMail($leave));
+            } catch (\Exception $e) {
+                \Log::error('Failed to send leave status email: ' . $e->getMessage());
+                // Don't fail the whole request just because email failed
+            }
+        } else {
+            \Log::warning('No employee email found for leave request ID: ' . $leave->id);
+        }
+
+        // Reload with proper relations for response
+        $leave->load(['user.employee']);
 
         return response()->json([
             'message'        => 'Leave request ' . $validated['status'] . ' successfully.',
-            'leave_request'  => $leave->load('employee')
+            'leave_request'  => $leave
         ]);
+    }
+
+    // Add these methods to your LeaveRequestController
+    public function exportPdf(Request $request, $type)
+    {
+        abort_unless($request->user()->can('view leaves'), 403);
+
+        $query = LeaveRequest::with([
+            'user',
+            'user.employee',
+            'user.employee.department',
+            'user.employee.rank',
+            'user.employee.branch'
+        ]);
+
+        if ($type === 'pending') {
+            $query->where('status', 'pending');
+        } elseif ($type === 'history') {
+            $query->whereIn('status', ['approved', 'rejected']);
+        }
+
+        // Filters - CORRECT CHAIN: user → employee → department
+        if ($request->filled('month')) {
+            $query->whereMonth('start_date', $request->month);
+        }
+        if ($request->filled('year')) {
+            $query->whereYear('start_date', $request->year);
+        }
+        if ($request->filled('employee')) {
+            $query->whereHas('user.employee', function ($q) use ($request) {
+                $q->where('id', $request->employee);
+            });
+        }
+        if ($request->filled('department')) {
+            $query->whereHas('user.employee.department', function ($q) use ($request) {
+                $q->where('id', $request->department);
+            });
+        }
+
+        $leaves = $query->latest()->get();
+
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('exports.leaves', [
+            'leaves' => $leaves,
+            'title' => $type === 'pending' ? 'Pending Leave Requests' : 'Leave History',
+            'date' => now()->format('F j, Y'),
+        ]);
+
+        return $pdf->download('leave_requests_' . $type . '_' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    public function exportExcel(Request $request, $type)
+    {
+        abort_unless($request->user()->can('view leaves'), 403);
+
+        $query = LeaveRequest::with([
+            'user',
+            'user.employee',
+            'user.employee.department',
+            'user.employee.rank',
+            'user.employee.branch'
+        ]);
+
+        if ($type === 'pending') {
+            $query->where('status', 'pending');
+        } elseif ($type === 'history') {
+            $query->whereIn('status', ['approved', 'rejected']);
+        }
+
+        if ($request->filled('month')) {
+            $query->whereMonth('start_date', $request->month);
+        }
+        if ($request->filled('year')) {
+            $query->whereYear('start_date', $request->year);
+        }
+        if ($request->filled('employee')) {
+            $query->whereHas('user.employee', function ($q) use ($request) {
+                $q->where('id', $request->employee);
+            });
+        }
+        if ($request->filled('department')) {
+            $query->whereHas('user.employee.department', function ($q) use ($request) {
+                $q->where('id', $request->department);
+            });
+        }
+
+        $leaves = $query->latest()->get();
+
+        $filename = 'leave_requests_' . $type . '_' . now()->format('Y-m-d') . '.xlsx';
+
+        return Excel::download(new LeaveExport($leaves, $type), $filename);
     }
 }

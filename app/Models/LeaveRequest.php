@@ -7,7 +7,6 @@ use Illuminate\Support\Str;
 
 class LeaveRequest extends Model
 {
-
     protected $fillable = [
         'user_id',
         'reason',
@@ -20,14 +19,9 @@ class LeaveRequest extends Model
         'admin_note',
     ];
 
-    public function employee()
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
-
     public $incrementing = false;
 
-    protected static function boot():void
+    protected static function boot(): void
     {
         parent::boot();
         static::creating(function ($model) {
@@ -35,5 +29,17 @@ class LeaveRequest extends Model
                 $model->id = (string) Str::uuid();
             }
         });
+    }
+
+    // CORRECT: Link to User, then access employee via user->employee
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    // Helper to get employee details easily
+    public function employee()
+    {
+        return $this->user?->employee();
     }
 }

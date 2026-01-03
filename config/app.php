@@ -19,7 +19,6 @@ return [
 
     Barryvdh\DomPDF\ServiceProvider::class,
     App\Providers\BroadcastServiceProvider::class,
-
     /*
      *
      *
