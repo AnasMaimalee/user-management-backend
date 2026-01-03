@@ -171,7 +171,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Admin / HR
     Route::get('/leaves',            [LeaveRequestController::class, 'index']);
     Route::patch('/leaves/{leave}',  [LeaveRequestController::class, 'update']);
-
+    Route::get('/leaves/my/export-pdf/{type}', [LeaveRequestController::class, 'exportMyPdf']);
+    Route::get('/leaves/my/export-excel/{type}', [LeaveRequestController::class, 'exportMyExcel']);
     /*
     |--------------------------------------------------------------------------
     | PAYROLL

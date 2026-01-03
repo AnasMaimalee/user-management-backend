@@ -198,4 +198,97 @@ class LeaveRequestController extends Controller
 
         return Excel::download(new LeaveExport($leaves, $type), $filename);
     }
+
+    /**
+     * Export employee's own pending leaves to PDF
+     */
+    public function exportMyPdf(Request $request, $type)
+    {
+        $user = auth()->user();
+
+        $query = LeaveRequest::with([
+            'user.employee',
+            'user.employee.department',
+            'user.employee.rank',
+            'user.employee.branch'
+        ])->where('user_id', $user->id);
+
+        if ($type === 'pending') {
+            $query->where('status', 'pending');
+            $title = 'My Pending Leave Requests';
+        } elseif ($type === 'history') {
+            $query->whereIn('status', ['approved', 'rejected']);
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+            $title = 'My Leave History';
+        } else {
+            abort(404);
+        }
+
+        if ($request->filled('month')) {
+            $query->whereMonth('start_date', $request->month);
+        }
+        if ($request->filled('year')) {
+            $query->whereYear('start_date', $request->year);
+        }
+
+        $leaves = $query->latest()->get();
+
+        if ($leaves->isEmpty()) {
+            return response()->json(['message' => 'No records found to export'], 404);
+        }
+
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('exports.leaves', [
+            'leaves' => $leaves,
+            'title'  => $title . ' - ' . $user->employee?->first_name . ' ' . $user->employee?->last_name,
+            'date'   => now()->format('F j, Y'),
+        ]);
+
+        return $pdf->download('my_leave_requests_' . $type . '_' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    /**
+     * Export employee's own leaves to Excel
+     */
+    public function exportMyExcel(Request $request, $type)
+    {
+        $user = auth()->user();
+
+        $query = LeaveRequest::with([
+            'user.employee',
+            'user.employee.department',
+            'user.employee.rank',
+            'user.employee.branch'
+        ])->where('user_id', $user->id);
+
+        if ($type === 'pending') {
+            $query->where('status', 'pending');
+        } elseif ($type === 'history') {
+            $query->whereIn('status', ['approved', 'rejected']);
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+        } else {
+            abort(404);
+        }
+
+        if ($request->filled('month')) {
+            $query->whereMonth('start_date', $request->month);
+        }
+        if ($request->filled('year')) {
+            $query->whereYear('start_date', $request->year);
+        }
+
+        $leaves = $query->latest()->get();
+
+        if ($leaves->isEmpty()) {
+            return response()->json(['message' => 'No records found to export'], 404);
+        }
+
+        $filename = 'my_leave_requests_' . $type . '_' . now()->format('Y-m-d') . '.xlsx';
+
+        return Excel::download(new LeaveExport($leaves, $type), $filename);
+    }
 }
