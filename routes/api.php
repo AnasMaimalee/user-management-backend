@@ -148,7 +148,8 @@ Route::middleware('auth:sanctum')->group(function () {
             'code' => 'EMP-' . str_pad($next, 2, '0', STR_PAD_LEFT),
         ]);
     });
-
+    Route::get('/employees/export-pdf', [EmployeeController::class, 'exportPdf']);
+    Route::get('/employees/export-excel', [EmployeeController::class, 'exportExcel']);
     Route::apiResource('employees', EmployeeController::class);
     Route::patch('employees/{employee}/status', [EmployeeController::class, 'updateStatus']);
 
@@ -278,6 +279,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/attendance/record', [AdminAttendanceController::class, 'record']);
     Route::get('/admin/attendance/export/pdf', [AttendanceExportController::class, 'pdf']);
     Route::get('/admin/attendance/export/excel', [AttendanceExportController::class, 'excel']);
+
+    Route::get('/employees/export-pdf', [EmployeeController::class, 'exportPdf']);
+    Route::get('/employees/export-excel', [EmployeeController::class, 'exportExcel']);
+
 });
 
 Route::middleware('auth:sanctum')->group(function () {

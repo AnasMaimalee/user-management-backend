@@ -12,6 +12,8 @@ use Illuminate\Support\Str;
 use App\Mail\EmployeeWelcomeMail;
 use Illuminate\Validation\Rule;
 use App\Models\Wallet;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\EmployeesExport;
 class EmployeeController extends Controller
 {
     public function index(Request $request)
@@ -163,5 +165,40 @@ class EmployeeController extends Controller
             'message' => 'Employee status updated successfully',
             'data'    => $employee->refresh()
         ]);
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $query = Employee::with(['department', 'rank', 'branch']);
+
+        if ($request->filled('department')) $query->where('department_id', $request->department);
+        if ($request->filled('rank')) $query->where('rank_id', $request->rank);
+        if ($request->filled('branch')) $query->where('branch_id', $request->branch);
+        if ($request->filled('status')) $query->where('status', $request->status);
+
+        $employees = $query->get();
+
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('exports.employees', [
+            'employees' => $employees,
+            'title' => 'Employees Report',
+            'date' => now()->format('F j, Y'),
+        ]);
+
+        return $pdf->download('employees_' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $query = Employee::with(['department', 'rank', 'branch']);
+
+        if ($request->filled('department')) $query->where('department_id', $request->department);
+        if ($request->filled('rank')) $query->where('rank_id', $request->rank);
+        if ($request->filled('branch')) $query->where('branch_id', $request->branch);
+        if ($request->filled('status')) $query->where('status', $request->status);
+
+        $employees = $query->get();
+
+        return Excel::download(new EmployeesExport($employees), 'employees_' . now()->format('Y-m-d') . '.xlsx');
     }
 }
